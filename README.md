@@ -15,8 +15,15 @@ Un solo file, `visidraw.html`: si apre con un doppio clic, funziona **offline** 
    alle frecce. In questa modalità i tratti (viola) diventano **sempre testo**, mai forme: anche una "O" grande resta una lettera.
    Sul tablet si scrive anche tenendo premuto il tasto laterale della penna; il retro della penna cancella.
    In alternativa usa **Testo** `T` da tastiera.
-3. **✨ Elabora** (`Invio`): riconosce forme, connettori e frecce e chiede di trascrivere le scritte a mano
-   (lasciando vuoto restano a mano libera). Se il browser ha il riconoscimento della scrittura, le precompila.
+3. **✨ Elabora** (`Invio`): riconosce forme, connettori e frecce e **legge le scritte a mano**: la finestra di
+   trascrizione arriva già compilata, tu confermi con `Invio` o correggi (svuotando un campo la scritta resta a mano libera).
+
+### Lettura della scrittura a mano
+Funziona offline, senza librerie, con lo **stampatello** (lettere staccate; il corsivo legato non si può dividere in lettere):
+divide la scritta in righe, lettere e parole, confronta ogni lettera con i modelli (algoritmo $P), usa altezza e posizione
+per maiuscole/minuscole e un vocabolario di parole frequenti negli schemi.
+**Impara dalle tue correzioni**: ogni trascrizione confermata aggiunge le tue lettere e le tue parole (salvate nel browser);
+*Vista › Dimentica la mia scrittura* le azzera.
 4. **Seleziona** (`V`): sposta, ridimensiona, doppio clic per il testo, pannello per forma, colori, frecce e percorso.
 
 ### Punti di aggancio e connettori
