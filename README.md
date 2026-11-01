@@ -8,7 +8,10 @@ Un solo file, `visidraw.html`: si apre con un doppio clic, funziona **offline** 
 
 ## Come si usa
 1. **Penna** (`P`): disegna rettangoli, ovali/cerchi, rombi, triangoli, parallelogrammi, nuvole; poi linee e frecce fra le forme.
-2. Scrivi a mano le etichette dentro le forme o vicino alle frecce (oppure usa **Testo** `T` da tastiera).
+2. **Scrittura a mano** (`W`, oppure un altro clic sulla penna già attiva): scrivi le etichette dentro le forme o vicino
+   alle frecce. In questa modalità i tratti (viola) diventano **sempre testo**, mai forme: anche una "O" grande resta una lettera.
+   Sul tablet si scrive anche tenendo premuto il tasto laterale della penna; il retro della penna cancella.
+   In alternativa usa **Testo** `T` da tastiera.
 3. **✨ Elabora** (`Invio`): riconosce forme, connettori e frecce e chiede di trascrivere le scritte a mano
    (lasciando vuoto restano a mano libera). Se il browser ha il riconoscimento della scrittura, le precompila.
 4. **Seleziona** (`V`): sposta, ridimensiona, doppio clic per il testo, pannello per forma, colori, frecce e percorso.
@@ -25,7 +28,8 @@ Modalità **Auto**: forme e linee vengono elaborate da sole dopo una pausa. Menu
 | Linea a gomito | connettore ortogonale (rispetta lati di uscita/entrata disegnati) |
 | Punta a "V" (nello stesso tratto o separata) | freccia (anche doppia) |
 | Estremo vicino a una forma | connettore agganciato: segue la forma quando la sposti |
-| Tratti piccoli | scritte da trascrivere (dentro la forma → etichetta; vicino a un connettore → etichetta del connettore) |
+| Tratti fatti in modalità Scrittura | sempre scritte da trascrivere, a qualunque dimensione |
+| Tratti piccoli (in modalità Forme) | scritte da trascrivere (dentro la forma → etichetta; vicino a un connettore → etichetta del connettore) |
 
 ## Salvataggio ed esportazione
 - **Salva/Apri** in JSON (`.visidraw.json`); salvataggio automatico nel browser.
