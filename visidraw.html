@@ -41,7 +41,7 @@ button,select,input,textarea{font:inherit;color:inherit}
 #work{display:grid;grid-template-columns:auto 1fr;min-height:0}
 #palette{width:176px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:8px;user-select:none}
 #palette h4{margin:8px 4px 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-#palHomeBox summary{margin:10px 4px 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer;user-select:none}
+#palHomeBox summary,#palDevBox summary{margin:10px 4px 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer;user-select:none}
 .pal{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
 .pitem{border:1px solid transparent;border-radius:8px;padding:4px 2px 2px;cursor:grab;text-align:center;font-size:10.5px;color:var(--muted);touch-action:none}
 .pitem:hover{background:#f1f5f9;border-color:var(--line)}
@@ -219,6 +219,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
       <div class="pal" id="palShapes"></div>
       <h4>Rete</h4>
       <div class="pal" id="palNet"></div>
+      <details id="palDevBox"><summary>Dispositivi e videosorveglianza</summary><div class="pal" id="palDev"></div></details>
       <details id="palHomeBox"><summary>Casa e intrattenimento</summary><div class="pal" id="palHome"></div></details>
       <p class="hint">Trascina o tocca una forma per inserirla. Oppure disegnala a mano con la <b>penna</b> e premi <b>✨ Elabora</b>.</p>
     </aside>
@@ -321,7 +322,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '1.10.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -971,7 +972,8 @@ const HW_WORDS=('inizio fine start end stop si no ok ko errore router switch fir
   'azure aws office pbx centralino reception amministrazione direzione tecnico terra primo secondo terzo edificio dmz '+
   'nas srv sw fw rtr gw dc ad radius ldap siem nac wlc controller ups cctv nvr badge tornello '+
   'tv fire firetv stick smart televisore console playstation ps4 ps5 xbox nintendo luce luci lampada hue philips '+
-  'ev colonnina wallbox ricarica auto echo alexa amazon speaker soundbar sound bar barra audio home theater').split(/\s+/).filter(Boolean);
+  'ev colonnina wallbox ricarica auto echo alexa amazon speaker soundbar sound bar barra audio home theater '+
+  'iphone android galaxy ios cellulare linux ubuntu debian dvr tvcc webcam cam videoregistratore').split(/\s+/).filter(Boolean);
 const HW_N=32;
 let HW_TPL=null, hwLearn={tpl:[], words:[]};
 const HW_HALF=new WeakMap();   // nuvole ridotte (16 punti) per la stima rapida
@@ -1287,23 +1289,28 @@ const SHAPES = ['rect','round','ellipse','diamond','parallelogram','triangle','h
 const NET_ICONS = ['router','switch','catalyst','firewall','server','datacenter','pc','laptop','ap','modem','printer','phone'];
 // icone casa/intrattenimento: nella sezione espandibile della tavolozza
 const HOME_ICONS = ['firetv','console','smartlight','evcharger','echo','soundbar'];
-const ICONS = NET_ICONS.concat(HOME_ICONS);
+// smartphone, server Linux e videosorveglianza: in un'altra sezione espandibile
+const DEV_ICONS = ['iphone','android','linuxserver','camera','dvr'];
+const ICONS = NET_ICONS.concat(DEV_ICONS, HOME_ICONS);
 const TYPE_NAMES = {rect:'Rettangolo', round:'Rettangolo arrotondato', ellipse:'Ellisse / cerchio', diamond:'Rombo (decisione)',
   parallelogram:'Parallelogramma (I/O)', triangle:'Triangolo', hexagon:'Esagono (preparazione)', document:'Documento',
   cylinder:'Database', cloud:'Nuvola / Internet', router:'Router', switch:'Switch', firewall:'Firewall', server:'Server',
   pc:'PC', laptop:'Portatile', ap:'Access point Wi-Fi', printer:'Stampante', phone:'Telefono IP',
   catalyst:'Catalyst (switch L3)', datacenter:'Datacenter', modem:'Modem',
-  firetv:'Amazon Fire TV', console:'Console videogiochi', smartlight:'Luce Philips Hue', evcharger:'Colonnina di ricarica EV', echo:'Amazon Echo', soundbar:'Soundbar'};
+  firetv:'Amazon Fire TV', console:'Console videogiochi', smartlight:'Luce Philips Hue', evcharger:'Colonnina di ricarica EV', echo:'Amazon Echo', soundbar:'Soundbar',
+  iphone:'iPhone', android:'Smartphone Android', linuxserver:'Server Linux', camera:'Telecamera IP', dvr:'DVR / NVR (videoregistratore)'};
 const SHORT_NAMES = {rect:'Processo', round:'Attività', ellipse:'Inizio/Fine', diamond:'Decisione', parallelogram:'Dati I/O',
   triangle:'Triangolo', hexagon:'Preparaz.', document:'Documento', cylinder:'Database', cloud:'Nuvola',
   router:'Router', switch:'Switch', firewall:'Firewall', server:'Server', pc:'PC', laptop:'Portatile', ap:'Access point', printer:'Stampante', phone:'Telefono',
   catalyst:'Catalyst', datacenter:'Datacenter', modem:'Modem',
-  firetv:'Fire TV', console:'Console', smartlight:'Luce Hue', evcharger:'Ricarica EV', echo:'Echo', soundbar:'Soundbar'};
+  firetv:'Fire TV', console:'Console', smartlight:'Luce Hue', evcharger:'Ricarica EV', echo:'Echo', soundbar:'Soundbar',
+  iphone:'iPhone', android:'Android', linuxserver:'Linux', camera:'Telecamera', dvr:'DVR'};
 const DEF_SIZE = {rect:[140,70], round:[140,70], ellipse:[130,64], diamond:[140,90], parallelogram:[150,70], triangle:[110,90],
   hexagon:[140,70], document:[140,80], cylinder:[100,90], cloud:[160,100],
   router:[60,60], switch:[80,44], firewall:[60,56], server:[46,66], pc:[64,58], laptop:[70,50], ap:[60,50], printer:[62,56], phone:[48,56],
   catalyst:[62,58], datacenter:[78,62], modem:[70,40],
-  firetv:[70,52], console:[72,44], smartlight:[44,60], evcharger:[44,66], echo:[44,56], soundbar:[84,30]};
+  firetv:[70,52], console:[72,44], smartlight:[44,60], evcharger:[44,66], echo:[44,56], soundbar:[84,30],
+  iphone:[36,62], android:[36,62], linuxserver:[54,66], camera:[66,46], dvr:[80,36]};
 const isIcon = t => ICONS.includes(t);
 const THEMES = {
   visio:{fill:'#dae8fc', stroke:'#2f5597', text:'#1b1b1b', edge:'#404040', icon:'#1f6fb2'},
@@ -1736,6 +1743,60 @@ function drawIcon(g, n, c){
       R(x,y+h*0.15,w,h*0.7,h*0.3,c);
       for (let i=0;i<9;i++) el('circle',{cx:r1(x+w*(0.12+0.085*i)), cy:r1(y+h*0.5), r:r1(h*0.07), fill:W, 'fill-opacity':0.75},g);
       el('circle',{cx:r1(x+w*0.92), cy:r1(y+h*0.5), r:r1(h*0.06), fill:'#22c55e'},g);
+      break; }
+    case 'iphone': {
+      // smartphone con angoli molto arrotondati, isola in alto e barra in basso
+      R(x,y,w,h,Math.min(w,h)*0.2,c); R(x+w*0.08,y+h*0.05,w*0.84,h*0.9,Math.min(w,h)*0.14,LIGHT);
+      R(cx-w*0.17,y+h*0.085,w*0.34,h*0.06,h*0.03,c);
+      R(cx-w*0.2,y+h*0.87,w*0.4,h*0.025,h*0.0125,c);
+      break; }
+    case 'android': {
+      // smartphone con fotocamera a foro e testa del robottino
+      R(x,y,w,h,Math.min(w,h)*0.1,c); R(x+w*0.08,y+h*0.05,w*0.84,h*0.9,Math.min(w,h)*0.06,LIGHT);
+      el('circle',{cx, cy:r1(y+h*0.1), r:r1(w*0.05), fill:c},g);
+      const hr=w*0.24, hy=y+h*0.58, G='#22c55e';
+      el('path',{d:`M${r1(cx-hr)} ${r1(hy)}A${r1(hr)} ${r1(hr)} 0 0 1 ${r1(cx+hr)} ${r1(hy)}Z`, fill:G},g);
+      for (const d of [-1,1]){
+        el('line',{x1:r1(cx+d*hr*0.5), y1:r1(hy-hr*0.8), x2:r1(cx+d*hr*0.8), y2:r1(hy-hr*1.25), stroke:G, 'stroke-width':1.4, 'stroke-linecap':'round'},g);
+        el('circle',{cx:r1(cx+d*hr*0.42), cy:r1(hy-hr*0.45), r:r1(hr*0.11), fill:W},g);
+      }
+      R(cx-hr,hy+h*0.02,hr*2,h*0.13,2,G);
+      break; }
+    case 'linuxserver': {
+      // server con il pinguino
+      const sw2=w*0.72;
+      R(x,y,sw2,h,5,c);
+      for (let i=0;i<3;i++){ const yy=y+h*(0.12+0.27*i); R(x+sw2*0.14, yy, sw2*0.72, h*0.17, 2, W);
+        el('circle',{cx:r1(x+sw2*0.74), cy:r1(yy+h*0.085), r:r1(Math.min(sw2,h)*0.035), fill:'#22c55e'},g); }
+      const px=x+w*0.74, py=y+h*0.7, pr=Math.min(w*0.24, h*0.2), K='#1f2937', Y='#f59e0b';
+      el('ellipse',{cx:r1(px), cy:r1(py), rx:r1(pr*0.95), ry:r1(pr*1.3), fill:K, stroke:W, 'stroke-width':1.2},g);
+      el('ellipse',{cx:r1(px), cy:r1(py+pr*0.35), rx:r1(pr*0.6), ry:r1(pr*0.8), fill:W},g);
+      for (const d of [-1,1]){
+        el('circle',{cx:r1(px+d*pr*0.3), cy:r1(py-pr*0.75), r:r1(pr*0.2), fill:W},g);
+        el('circle',{cx:r1(px+d*pr*0.25), cy:r1(py-pr*0.72), r:r1(pr*0.09), fill:K},g);
+        el('ellipse',{cx:r1(px+d*pr*0.45), cy:r1(py+pr*1.25), rx:r1(pr*0.4), ry:r1(pr*0.16), fill:Y},g);
+      }
+      el('path',{d:`M${r1(px-pr*0.25)} ${r1(py-pr*0.45)}L${r1(px+pr*0.25)} ${r1(py-pr*0.45)}L${r1(px)} ${r1(py-pr*0.2)}Z`, fill:Y},g);
+      break; }
+    case 'camera': {
+      // telecamera a cilindro con obiettivo, staffa e supporto a muro
+      el('path',{d:`M${r1(x+w*0.62)} ${r1(y+h*0.5)}V${r1(y+h*0.72)}H${r1(x+w*0.88)}`, fill:'none', stroke:c, 'stroke-width':r1(Math.max(2.5,h*0.09))},g);
+      R(x+w*0.88,y+h*0.5,w*0.12,h*0.45,2,c);
+      const bg=el('g',{transform:`rotate(14 ${r1(cx)} ${r1(y+h*0.32)})`},g);
+      el('rect',{x:r1(x+w*0.1), y:r1(y+h*0.14), width:r1(w*0.72), height:r1(h*0.36), rx:r1(h*0.08), fill:c},bg);
+      el('rect',{x:r1(x+w*0.06), y:r1(y+h*0.06), width:r1(w*0.8), height:r1(h*0.1), rx:r1(h*0.05), fill:c},bg);
+      el('ellipse',{cx:r1(x+w*0.1), cy:r1(y+h*0.32), rx:r1(w*0.05), ry:r1(h*0.16), fill:LIGHT, stroke:c, 'stroke-width':1},bg);
+      el('circle',{cx:r1(x+w*0.72), cy:r1(y+h*0.26), r:r1(h*0.04), fill:'#ef4444'},bg);
+      break; }
+    case 'dvr': {
+      // videoregistratore: scatola piatta con display, punto rosso REC, canali e led
+      R(x,y+h*0.12,w,h*0.74,5,c);
+      R(x+w*0.06,y+h*0.3,w*0.3,h*0.38,2,LIGHT);
+      el('circle',{cx:r1(x+w*0.13), cy:r1(y+h*0.49), r:r1(h*0.08), fill:'#ef4444'},g);
+      el('path',{d:`M${r1(x+w*0.22)} ${r1(y+h*0.38)}L${r1(x+w*0.31)} ${r1(y+h*0.49)}L${r1(x+w*0.22)} ${r1(y+h*0.6)}Z`, fill:c},g);
+      for (let i=0;i<4;i++) R(x+w*(0.44+0.1*i),y+h*0.4,w*0.07,h*0.18,1.5,W);
+      el('circle',{cx:r1(x+w*0.9), cy:r1(y+h*0.49), r:r1(h*0.06), fill:'#22c55e'},g);
+      for (const f of [0.1,0.84]) R(x+w*f,y+h*0.86,w*0.06,h*0.1,1,c);
       break; }
     case 'modem': {
       // scatola piatta con onda del segnale e led
@@ -2210,7 +2271,13 @@ function duplicateSel(){
 }
 
 /* ---- Elaborazione: dallo schizzo al diagramma ---- */
-const ICON_WORDS=[['router',/^(router|rtr|gateway|gw)\b/i], ['catalyst',/^(catalyst|l3|multilayer|switch l3|sw l3)\b/i], ['switch',/^(switch|sw)\b/i],
+const ICON_WORDS=[
+  ['android',/^((smartphone|cellulare|telefono) )?(android|galaxy)\b/i],
+  ['iphone',/^((smartphone|cellulare|telefono) )?(iphone|ios)\b|^(smartphone|cellulare|telefonino)\b/i],
+  ['linuxserver',/^((server|srv) )?(linux|ubuntu|debian|centos|rhel|red ?hat)\b/i],
+  ['camera',/^(telecamer[ae]|videocamer[ae]|ip ?cam(era)?|camera ip|webcam|cctv|tvcc|cam)\b/i],
+  ['dvr',/^(dvr|nvr|xvr|videoregistratore)\b/i],
+  ['router',/^(router|rtr|gateway|gw)\b/i], ['catalyst',/^(catalyst|l3|multilayer|switch l3|sw l3)\b/i], ['switch',/^(switch|sw)\b/i],
   ['datacenter',/^(datacenter|data ?center|dc|ced)\b/i], ['modem',/^(modem|adsl|vdsl|ont|cpe)\b/i], ['firewall',/^(firewall|fw|utm)\b/i],
   ['server',/^(server|srv|nas)\b/i], ['laptop',/^(laptop|notebook|portatile)\b/i], ['pc',/^(pc|client|desktop|workstation)\b/i],
   ['ap',/^(ap|access ?point|wi-?fi)\b/i], ['printer',/^(stampante|printer)\b/i], ['phone',/^(telefono|phone|voip)\b/i],
@@ -2485,7 +2552,7 @@ function miniSvg(type){
   return svg;
 }
 function buildPalette(){
-  for (const [box, list] of [[$('#palShapes'), SHAPES], [$('#palNet'), NET_ICONS], [$('#palHome'), HOME_ICONS]]){
+  for (const [box, list] of [[$('#palShapes'), SHAPES], [$('#palNet'), NET_ICONS], [$('#palDev'), DEV_ICONS], [$('#palHome'), HOME_ICONS]]){
     box.replaceChildren();
     for (const t of list){
       const d=document.createElement('div'); d.className='pitem'; d.title=TYPE_NAMES[t];
@@ -2645,14 +2712,17 @@ const DRAWIO_STYLE={rect:'rounded=0;whiteSpace=wrap;html=1;', round:'rounded=1;w
   router:'mxgraph.cisco.routers.router', switch:'mxgraph.cisco.switches.workgroup_switch', firewall:'mxgraph.cisco.security.firewall',
   server:'mxgraph.cisco.servers.fileserver', pc:'mxgraph.cisco.computers_and_peripherals.pc', laptop:'mxgraph.cisco.computers_and_peripherals.laptop',
   ap:'mxgraph.cisco.misc.access_point', printer:'mxgraph.cisco.computers_and_peripherals.printer', phone:'mxgraph.cisco.modems_and_phones.ip_phone',
-  catalyst:'mxgraph.cisco.switches.layer_3_switch', modem:'mxgraph.cisco.modems_and_phones.modem', datacenter:'mxgraph.cisco19.data_center2'};
+  catalyst:'mxgraph.cisco.switches.layer_3_switch', modem:'mxgraph.cisco.modems_and_phones.modem', datacenter:'mxgraph.cisco19.data_center2',
+  iphone:'mxgraph.cisco.modems_and_phones.cell_phone', android:'mxgraph.cisco.modems_and_phones.cell_phone', linuxserver:'mxgraph.cisco.servers.fileserver',
+  camera:'mxgraph.cisco.computers_and_peripherals.video_camera'};
 function exportDrawio(){
   if (!S.nodes.length && !S.edges.length && !S.texts.length) return toast('Il foglio è vuoto.');
   const th=THEMES[S.theme]||THEMES.visio, val=s=>xmlEsc(xmlEsc(s||'').replace(/\n/g,'<br>'));
   const cells=['<mxCell id="0"/>','<mxCell id="1" parent="0"/>'];
   for (const n of S.nodes){
     const c=colorsOf(n); let st;
-    if (HOME_ICONS.includes(n.type)) st=`rounded=1;html=1;fillColor=${c.fill};strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;`;
+    // icone senza simbolo in draw.io: riquadro arrotondato con l'etichetta sotto
+    if (isIcon(n.type) && !DRAWIO_STYLE[n.type]) st=`rounded=1;html=1;fillColor=${c.fill};strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;`;
     else if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;`+(n.type==='datacenter'?'fillColor=#fafafa;strokeColor=#005073;':`fillColor=${c.fill};strokeColor=#ffffff;strokeWidth=2;`)+`verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
     else st=DRAWIO_STYLE[n.type]+`fillColor=${c.fill};strokeColor=${c.stroke};`+(n.type==='triangle'&&n.dir==='down'?'direction=south;':'');
     st+=`fontSize=${n.fs||14};fontFamily=${fontName(n)};`+(n.dash?'dashed=1;':'')+(n.sw&&!isIcon(n.type)?`strokeWidth=${n.sw};`:'');
@@ -2985,7 +3055,9 @@ function runSelfTest(){
     const savedIcons=opt.icons; opt.icons=true;
     const kw=[['ROUTER','router'], ['TV','firetv'], ['Fire TV','firetv'], ['Console','console'], ['PS5','console'], ['Philips Hue','smartlight'],
       ['Luce','smartlight'], ['Wallbox','evcharger'], ['Ricarica EV','evcharger'], ['Echo','echo'], ['Alexa','echo'], ['Soundbar','soundbar'],
-      ['Fine','rect'], ['Ricarica credito','rect'], ['Evento','rect']];
+      ['iPhone','iphone'], ['Smartphone Android','android'], ['Server Linux','linuxserver'], ['Ubuntu','linuxserver'], ['Telecamera','camera'],
+      ['TVCC','camera'], ['DVR','dvr'], ['NVR','dvr'], ['Telefono','phone'], ['Server','server'],
+      ['Fine','rect'], ['Ricarica credito','rect'], ['Evento','rect'], ['Camera','rect']];
     const bad=kw.filter(([t, type])=>{ const n={type:'rect', x:0, y:0, w:120, h:60, text:t}; applyIconKeyword(n); return n.type!==type; }).map(k=>k[0]);
     opt.icons=savedIcons;
     geo.push([`parole chiave → icone${bad.length?': '+bad.join(', '):''}`, !bad.length]);
@@ -3010,7 +3082,7 @@ function runSelfTest(){
   }
   // stampatello maiuscolo con lettere molto vicine e scrittura imprecisa (opzione "solo maiuscole")
   opt.hwUpper=true;
-  for (const w of ['ROUTER','SWITCH CORE','FIREWALL','DATACENTER','VLAN 10','PC 12','ERRORE','STAMPANTE','TV','ECHO','WALLBOX']){
+  for (const w of ['ROUTER','SWITCH CORE','FIREWALL','DATACENTER','VLAN 10','PC 12','ERRORE','STAMPANTE','TV','ECHO','WALLBOX','TELECAMERA','DVR','LINUX']){
     let pass=0; const fails=[];
     for (let seed=1; seed<=5; seed++){
       const R=rng(seed*31+w.length*7), inks=inksFrom(SK.hand(R, w, 0, 0, 30+R()*25, {gap:0.05, messy:0.8}));
