@@ -322,7 +322,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.11.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -973,7 +973,7 @@ const HW_WORDS=('inizio fine start end stop si no ok ko errore router switch fir
   'nas srv sw fw rtr gw dc ad radius ldap siem nac wlc controller ups cctv nvr badge tornello '+
   'tv fire firetv stick smart televisore console playstation ps4 ps5 xbox nintendo luce luci lampada hue philips '+
   'ev colonnina wallbox ricarica auto echo alexa amazon speaker soundbar sound bar barra audio home theater '+
-  'iphone android galaxy ios cellulare linux ubuntu debian dvr tvcc webcam cam videoregistratore').split(/\s+/).filter(Boolean);
+  'iphone ipad android galaxy ios cellulare linux ubuntu debian dvr tvcc webcam cam videoregistratore').split(/\s+/).filter(Boolean);
 const HW_N=32;
 let HW_TPL=null, hwLearn={tpl:[], words:[]};
 const HW_HALF=new WeakMap();   // nuvole ridotte (16 punti) per la stima rapida
@@ -1290,7 +1290,7 @@ const NET_ICONS = ['router','switch','catalyst','firewall','server','datacenter'
 // icone casa/intrattenimento: nella sezione espandibile della tavolozza
 const HOME_ICONS = ['firetv','console','smartlight','evcharger','echo','soundbar'];
 // smartphone, server Linux e videosorveglianza: in un'altra sezione espandibile
-const DEV_ICONS = ['iphone','android','linuxserver','camera','dvr'];
+const DEV_ICONS = ['iphone','android','ipad','androidtab','linuxserver','camera','dvr'];
 const ICONS = NET_ICONS.concat(DEV_ICONS, HOME_ICONS);
 const TYPE_NAMES = {rect:'Rettangolo', round:'Rettangolo arrotondato', ellipse:'Ellisse / cerchio', diamond:'Rombo (decisione)',
   parallelogram:'Parallelogramma (I/O)', triangle:'Triangolo', hexagon:'Esagono (preparazione)', document:'Documento',
@@ -1298,19 +1298,19 @@ const TYPE_NAMES = {rect:'Rettangolo', round:'Rettangolo arrotondato', ellipse:'
   pc:'PC', laptop:'Portatile', ap:'Access point Wi-Fi', printer:'Stampante', phone:'Telefono IP',
   catalyst:'Catalyst (switch L3)', datacenter:'Datacenter', modem:'Modem',
   firetv:'Amazon Fire TV', console:'Console videogiochi', smartlight:'Luce Philips Hue', evcharger:'Colonnina di ricarica EV', echo:'Amazon Echo', soundbar:'Soundbar',
-  iphone:'iPhone', android:'Smartphone Android', linuxserver:'Server Linux', camera:'Telecamera IP', dvr:'DVR / NVR (videoregistratore)'};
+  iphone:'iPhone', android:'Smartphone Android', ipad:'iPad (iOS)', androidtab:'Tablet Android', linuxserver:'Server Linux', camera:'Telecamera IP', dvr:'DVR / NVR (videoregistratore)'};
 const SHORT_NAMES = {rect:'Processo', round:'Attività', ellipse:'Inizio/Fine', diamond:'Decisione', parallelogram:'Dati I/O',
   triangle:'Triangolo', hexagon:'Preparaz.', document:'Documento', cylinder:'Database', cloud:'Nuvola',
   router:'Router', switch:'Switch', firewall:'Firewall', server:'Server', pc:'PC', laptop:'Portatile', ap:'Access point', printer:'Stampante', phone:'Telefono',
   catalyst:'Catalyst', datacenter:'Datacenter', modem:'Modem',
   firetv:'Fire TV', console:'Console', smartlight:'Luce Hue', evcharger:'Ricarica EV', echo:'Echo', soundbar:'Soundbar',
-  iphone:'iPhone', android:'Android', linuxserver:'Linux', camera:'Telecamera', dvr:'DVR'};
+  iphone:'iPhone', android:'Android', ipad:'iPad', androidtab:'Tablet Android', linuxserver:'Linux', camera:'Telecamera', dvr:'DVR'};
 const DEF_SIZE = {rect:[140,70], round:[140,70], ellipse:[130,64], diamond:[140,90], parallelogram:[150,70], triangle:[110,90],
   hexagon:[140,70], document:[140,80], cylinder:[100,90], cloud:[160,100],
   router:[60,60], switch:[80,44], firewall:[60,56], server:[46,66], pc:[64,58], laptop:[70,50], ap:[60,50], printer:[62,56], phone:[48,56],
   catalyst:[62,58], datacenter:[78,62], modem:[70,40],
   firetv:[70,52], console:[72,44], smartlight:[44,60], evcharger:[44,66], echo:[44,56], soundbar:[84,30],
-  iphone:[36,62], android:[36,62], linuxserver:[54,66], camera:[66,46], dvr:[80,36]};
+  iphone:[36,62], android:[36,62], ipad:[72,52], androidtab:[72,52], linuxserver:[54,66], camera:[66,46], dvr:[80,36]};
 const isIcon = t => ICONS.includes(t);
 const THEMES = {
   visio:{fill:'#dae8fc', stroke:'#2f5597', text:'#1b1b1b', edge:'#404040', icon:'#1f6fb2'},
@@ -1631,6 +1631,14 @@ function arrowGlyph(g, a, b, s, col){
 function drawIcon(g, n, c){
   const {x,y,w,h}=n, cx=x+w/2, cy=y+h/2, W='#ffffff', LIGHT='#e8f1fb';
   const R=(xx,yy,ww,hh,rx,f,s)=>el('rect',{x:r1(xx),y:r1(yy),width:r1(ww),height:r1(hh),rx:rx,fill:f,stroke:s,'stroke-width':s?1.5:''},g);
+  // robottino Android stilizzato: testa (semicerchio sopra hy) con antenne e occhi, corpo sotto
+  const droid=(ox,hy,hr)=>{ const G='#22c55e';
+    el('path',{d:`M${r1(ox-hr)} ${r1(hy)}A${r1(hr)} ${r1(hr)} 0 0 1 ${r1(ox+hr)} ${r1(hy)}Z`, fill:G},g);
+    for (const d of [-1,1]){
+      el('line',{x1:r1(ox+d*hr*0.5), y1:r1(hy-hr*0.8), x2:r1(ox+d*hr*0.8), y2:r1(hy-hr*1.25), stroke:G, 'stroke-width':1.4, 'stroke-linecap':'round'},g);
+      el('circle',{cx:r1(ox+d*hr*0.42), cy:r1(hy-hr*0.45), r:r1(hr*0.11), fill:W},g);
+    }
+    R(ox-hr,hy+hr*0.15,hr*2,hr*0.95,2,G); };
   switch(n.type){
     case 'router': {
       el('ellipse',{cx, cy, rx:w/2, ry:h/2, fill:c}, g);
@@ -1754,13 +1762,23 @@ function drawIcon(g, n, c){
       // smartphone con fotocamera a foro e testa del robottino
       R(x,y,w,h,Math.min(w,h)*0.1,c); R(x+w*0.08,y+h*0.05,w*0.84,h*0.9,Math.min(w,h)*0.06,LIGHT);
       el('circle',{cx, cy:r1(y+h*0.1), r:r1(w*0.05), fill:c},g);
-      const hr=w*0.24, hy=y+h*0.58, G='#22c55e';
-      el('path',{d:`M${r1(cx-hr)} ${r1(hy)}A${r1(hr)} ${r1(hr)} 0 0 1 ${r1(cx+hr)} ${r1(hy)}Z`, fill:G},g);
-      for (const d of [-1,1]){
-        el('line',{x1:r1(cx+d*hr*0.5), y1:r1(hy-hr*0.8), x2:r1(cx+d*hr*0.8), y2:r1(hy-hr*1.25), stroke:G, 'stroke-width':1.4, 'stroke-linecap':'round'},g);
-        el('circle',{cx:r1(cx+d*hr*0.42), cy:r1(hy-hr*0.45), r:r1(hr*0.11), fill:W},g);
-      }
-      R(cx-hr,hy+h*0.02,hr*2,h*0.13,2,G);
+      droid(cx, y+h*0.58, w*0.24);
+      break; }
+    case 'ipad': {
+      // tablet orizzontale: cornice sottile, fotocamera di lato, icone delle app e dock
+      const m=Math.min(w,h), b=m*0.09;
+      R(x,y,w,h,m*0.14,c); R(x+b,y+b,w-2*b,h-2*b,m*0.06,LIGHT);
+      el('circle',{cx:r1(x+b/2), cy, r:r1(m*0.022), fill:LIGHT},g);
+      const iw=(w-2*b)*0.12, gx=(w-2*b-4*iw)/5;
+      for (let i=0;i<2;i++) for (let j=0;j<4;j++) R(x+b+gx+j*(iw+gx), y+b+h*0.1+i*(iw+h*0.08), iw, iw, iw*0.25, c, null).setAttribute('fill-opacity','0.45');
+      R(x+w*0.22, y+h-b-h*0.2, w*0.56, h*0.14, h*0.05, c, null).setAttribute('fill-opacity','0.3');
+      break; }
+    case 'androidtab': {
+      // tablet Android orizzontale: angoli meno arrotondati, fotocamera a foro e robottino
+      const m=Math.min(w,h), b=m*0.09;
+      R(x,y,w,h,m*0.08,c); R(x+b,y+b,w-2*b,h-2*b,m*0.04,LIGHT);
+      el('circle',{cx:r1(x+b/2), cy, r:r1(m*0.03), fill:LIGHT},g);
+      droid(cx, y+h*0.56, m*0.2);
       break; }
     case 'linuxserver': {
       // server con il pinguino
@@ -2272,6 +2290,8 @@ function duplicateSel(){
 
 /* ---- Elaborazione: dallo schizzo al diagramma ---- */
 const ICON_WORDS=[
+  ['androidtab',/^((tablet|tab) android|android tab(let)?|galaxy tab)\b/i],
+  ['ipad',/^(ipad(os)?|(tablet|tab) ios|ios tablet|tablet)\b/i],
   ['android',/^((smartphone|cellulare|telefono) )?(android|galaxy)\b/i],
   ['iphone',/^((smartphone|cellulare|telefono) )?(iphone|ios)\b|^(smartphone|cellulare|telefonino)\b/i],
   ['linuxserver',/^((server|srv) )?(linux|ubuntu|debian|centos|rhel|red ?hat)\b/i],
@@ -2713,7 +2733,8 @@ const DRAWIO_STYLE={rect:'rounded=0;whiteSpace=wrap;html=1;', round:'rounded=1;w
   server:'mxgraph.cisco.servers.fileserver', pc:'mxgraph.cisco.computers_and_peripherals.pc', laptop:'mxgraph.cisco.computers_and_peripherals.laptop',
   ap:'mxgraph.cisco.misc.access_point', printer:'mxgraph.cisco.computers_and_peripherals.printer', phone:'mxgraph.cisco.modems_and_phones.ip_phone',
   catalyst:'mxgraph.cisco.switches.layer_3_switch', modem:'mxgraph.cisco.modems_and_phones.modem', datacenter:'mxgraph.cisco19.data_center2',
-  iphone:'mxgraph.cisco.modems_and_phones.cell_phone', android:'mxgraph.cisco.modems_and_phones.cell_phone', linuxserver:'mxgraph.cisco.servers.fileserver',
+  iphone:'mxgraph.cisco.modems_and_phones.cell_phone', android:'mxgraph.cisco.modems_and_phones.cell_phone',
+  ipad:'mxgraph.cisco.computers_and_peripherals.tablet', androidtab:'mxgraph.cisco.computers_and_peripherals.tablet', linuxserver:'mxgraph.cisco.servers.fileserver',
   camera:'mxgraph.cisco.computers_and_peripherals.video_camera'};
 function exportDrawio(){
   if (!S.nodes.length && !S.edges.length && !S.texts.length) return toast('Il foglio è vuoto.');
@@ -3055,7 +3076,8 @@ function runSelfTest(){
     const savedIcons=opt.icons; opt.icons=true;
     const kw=[['ROUTER','router'], ['TV','firetv'], ['Fire TV','firetv'], ['Console','console'], ['PS5','console'], ['Philips Hue','smartlight'],
       ['Luce','smartlight'], ['Wallbox','evcharger'], ['Ricarica EV','evcharger'], ['Echo','echo'], ['Alexa','echo'], ['Soundbar','soundbar'],
-      ['iPhone','iphone'], ['Smartphone Android','android'], ['Server Linux','linuxserver'], ['Ubuntu','linuxserver'], ['Telecamera','camera'],
+      ['iPhone','iphone'], ['iOS','iphone'], ['Smartphone Android','android'], ['iPad','ipad'], ['iPad iOS','ipad'], ['Tablet','ipad'],
+      ['Tablet Android','androidtab'], ['Android tablet','androidtab'], ['Galaxy Tab','androidtab'], ['Android','android'], ['Server Linux','linuxserver'], ['Ubuntu','linuxserver'], ['Telecamera','camera'],
       ['TVCC','camera'], ['DVR','dvr'], ['NVR','dvr'], ['Telefono','phone'], ['Server','server'],
       ['Fine','rect'], ['Ricarica credito','rect'], ['Evento','rect'], ['Camera','rect']];
     const bad=kw.filter(([t, type])=>{ const n={type:'rect', x:0, y:0, w:120, h:60, text:t}; applyIconKeyword(n); return n.type!==type; }).map(k=>k[0]);

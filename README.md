@@ -44,10 +44,10 @@ mai diagonali): da uno spigolo escono in orizzontale o in verticale.
   Rilasciandolo dentro la forma torna all'aggancio automatico (anche con *Aggancio › Automatico* nel pannello).
 
 Altro: tavolozza di forme e icone di rete (router, switch, Catalyst/switch L3, firewall, server, datacenter, PC, portatile, AP, modem, stampante, telefono).
-Sezioni espandibili: *Dispositivi e videosorveglianza* (iPhone, Android, server Linux, telecamera, DVR/NVR) e
+Sezioni espandibili: *Dispositivi e videosorveglianza* (iPhone, Android, iPad, tablet Android, server Linux, telecamera, DVR/NVR) e
 *Casa e intrattenimento* (Fire TV, console, luce Hue, colonnina di ricarica EV, Echo, soundbar).
 Scrivendo *router, switch, catalyst, firewall, server, datacenter, modem, pc, AP, internet, database*… la forma diventa l'icona corrispondente.
-Vale anche per *iPhone / smartphone, Android, Linux / Ubuntu / server Linux, telecamera / TVCC / CCTV, DVR / NVR,
+Vale anche per *iPhone / smartphone, Android, iPad / tablet, tablet Android / Galaxy Tab, Linux / Ubuntu / server Linux, telecamera / TVCC / CCTV, DVR / NVR,
 TV / Fire TV, console / PS5 / Xbox, luce / Hue, EV / colonnina / wallbox, Echo / Alexa, soundbar*.
 Modalità **Auto**: forme e linee vengono elaborate da sole dopo una pausa. Menu **Esempi** per provare subito.
 
