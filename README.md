@@ -16,6 +16,16 @@ Un solo file, `visidraw.html`: si apre con un doppio clic, funziona **offline** 
    (lasciando vuoto restano a mano libera). Se il browser ha il riconoscimento della scrittura, le precompila.
 4. **Seleziona** (`V`): sposta, ridimensiona, doppio clic per il testo, pannello per forma, colori, frecce e percorso.
 
+### Punti di aggancio e connettori
+Ogni forma ha **8 punti di aggancio** (croci blu, visibili passando sulla forma o selezionandola): i 4 spigoli e
+le 4 metà dei lati. I connettori agganciati alle forme sono **ortogonali** (solo tratti orizzontali e verticali,
+mai diagonali): da uno spigolo escono in orizzontale o in verticale.
+- **Aggancio automatico**: il connettore sceglie da solo i lati migliori e li ricalcola quando sposti le forme.
+- **Nuovo connettore**: trascina da una croce verso un'altra forma.
+- **Punto fisso**: trascina un estremo del connettore su una croce (cerchio verde) oppure in un **punto
+  intermedio** lungo il contorno; il punto resta in proporzione anche ridimensionando la forma.
+  Rilasciandolo dentro la forma torna all'aggancio automatico (anche con *Aggancio › Automatico* nel pannello).
+
 Altro: tavolozza di forme e icone di rete (router, switch, firewall, server, PC, portatile, AP, stampante, telefono).
 Scrivendo *router, switch, firewall, server, pc, AP, internet, database*… la forma diventa l'icona corrispondente.
 Modalità **Auto**: forme e linee vengono elaborate da sole dopo una pausa. Menu **Esempi** per provare subito.
@@ -24,7 +34,8 @@ Modalità **Auto**: forme e linee vengono elaborate da sole dopo una pausa. Menu
 | Disegno | Risultato |
 |---|---|
 | Tratto chiuso (anche in più tratti consecutivi) | rettangolo, ellisse/cerchio, rombo, triangolo, parallelogramma, nuvola |
-| Linea dritta | connettore diretto |
+| Linea dritta fra forme | connettore ortogonale (dritto se le forme sono allineate) |
+| Linea che parte da uno spigolo | connettore agganciato a quello spigolo |
 | Linea a gomito | connettore ortogonale (rispetta lati di uscita/entrata disegnati) |
 | Punta a "V" (nello stesso tratto o separata) | freccia (anche doppia) |
 | Estremo vicino a una forma | connettore agganciato: segue la forma quando la sposti |

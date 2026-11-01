@@ -50,7 +50,7 @@ button,select,input,textarea{font:inherit;color:inherit}
 #stage{position:relative;overflow:hidden;background:var(--board);
   background-image:radial-gradient(circle,#c9d2de 1px,transparent 1.2px);background-size:20px 20px}
 #stage.nogrid{background-image:none}
-#board{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+#board{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block;user-select:none;-webkit-user-select:none}
 #board.t-pen{cursor:crosshair}
 #board.t-eraser{cursor:cell}
 #board.t-text{cursor:text}
@@ -201,6 +201,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
         <g id="vp">
           <g id="lNodes"></g>
           <g id="lEdges"></g>
+          <g id="lLabels"></g>
           <g id="lTexts"></g>
           <g id="lInks"></g>
           <g id="lSel"></g>
@@ -220,6 +221,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
           <div class="row"><span>Percorso</span><select id="pStyle"><option value="straight">Diretto</option><option value="orth">Ortogonale</option><option value="curve">Curvo</option><option value="poly">Libero</option></select></div>
           <div class="row"><span>Frecce</span><select id="pArrows"><option value="none">Nessuna</option><option value="end">Alla fine →</option><option value="start">All'inizio ←</option><option value="both">Entrambe ↔</option></select></div>
           <div class="row"><span>Colore</span><div class="sw" id="pEColor"></div></div>
+          <div class="row"><span>Aggancio</span><button type="button" id="pAuto" title="Usa i punti di aggancio migliori in automatico (seguono le forme quando le sposti)" style="border:1px solid var(--line);background:#f8fafc;border-radius:6px;padding:3px 8px;cursor:pointer">Automatico</button></div>
           <div class="row"><span>Spessore</span><select id="pWidth"><option value="1">Sottile</option><option value="1.6">Normale</option><option value="2.5">Spesso</option><option value="4">Molto spesso</option></select></div>
         </div>
         <div class="sec" id="pCommon">
@@ -289,7 +291,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -722,15 +724,19 @@ function recognize(inks, existingNodes, existingEdges){
       if (!A && !B && !arrowA && !arrowB){ keep.push(it.ink); it.used=true; continue; }
       style = (A && B) ? 'straight' : 'poly';
     }
-    const e={id:uid('e'), a:A?{n:A.id}:{x:o.a[0], y:o.a[1]}, b:B?{n:B.id}:{x:o.b[0], y:o.b[1]}, style, arrowA, arrowB, text:''};
+    // agganciato ad almeno una forma: niente diagonali, connettore ortogonale
+    if (style==='straight' && (A || B)) style='orth';
+    const e={id:uid('e'), a:A?endRefFor(A, o.a, it.k):{x:o.a[0], y:o.a[1]}, b:B?endRefFor(B, o.b, it.k):{x:o.b[0], y:o.b[1]}, style, arrowA, arrowB, text:''};
     if (style==='poly') e.via=o.verts.slice(1,-1).map(p=>[r1(p[0]),r1(p[1])]);
-    if (style==='orth' && A && B && o.verts.length>2){
-      // lato da cui il tratto esce dalla prima forma e lato da cui entra nella seconda
+    if (o.style==='orth' && A && B && o.verts.length>2){
+      // gomito disegnato: lato da cui il tratto esce dalla prima forma e lato da cui entra nella seconda
       const v=o.verts, f=[v[1][0]-v[0][0], v[1][1]-v[0][1]], l=[v[v.length-1][0]-v[v.length-2][0], v[v.length-1][1]-v[v.length-2][1]];
-      e.sA = Math.abs(f[1])>Math.abs(f[0]) ? (f[1]>0?'b':'t') : (f[0]>0?'r':'l');
-      e.sB = Math.abs(l[1])>Math.abs(l[0]) ? (l[1]>0?'t':'b') : (l[0]>0?'l':'r');
+      const sA = Math.abs(f[1])>Math.abs(f[0]) ? (f[1]>0?'b':'t') : (f[0]>0?'r':'l');
+      const sB = Math.abs(l[1])>Math.abs(l[0]) ? (l[1]>0?'t':'b') : (l[0]>0?'l':'r');
+      if (!e.a.p) e.a.p=SIDE_P[sA].slice();
+      if (!e.b.p) e.b.p=SIDE_P[sB].slice();
       // percorso a U: conserva la profondità disegnata
-      if (e.sA===e.sB) e.um = r1('tb'.includes(e.sA) ? v[1][1] : v[1][0]);
+      if (sA===sB){ e.ua='tb'.includes(sA)?'y':'x'; e.um=r1(e.ua==='y' ? v[1][1] : v[1][0]); }
     }
     if (style==='orth' && !(A && B) && o.verts.length>2) e.via=o.verts.slice(1,-1).map(p=>[r1(p[0]),r1(p[1])]);
     edges.push(e); it.used=true;
@@ -815,7 +821,71 @@ function endRef(r, getNode){
   if (r.n){ const n=getNode(r.n); return n ? {node:n, p:center(n)} : null; }
   return {p:[r.x, r.y]};
 }
-const DIRS={t:[0,-1], b:[0,1], l:[-1,0], r:[1,0]};
+/* Punti di aggancio: 8 per forma (4 spigoli + 4 metà dei lati), espressi in coordinate
+   relative al riquadro [u,v] ∈ [0,1] e proiettati sul contorno lungo il raggio dal centro.
+   Così restano corretti anche ridimensionando la forma; [u,v] qualsiasi = punto intermedio. */
+const ANCHORS=[[0,0],[.5,0],[1,0],[1,.5],[1,1],[.5,1],[0,1],[0,.5]];
+const SIDE_MIDS=[[.5,0],[1,.5],[.5,1],[0,.5]];
+const SIDE_P={t:[.5,0], b:[.5,1], l:[0,.5], r:[1,.5]};
+function anchorPoint(n, p){
+  const c=center(n), d=[n.x+p[0]*n.w-c[0], n.y+p[1]*n.h-c[1]];
+  if (Math.hypot(d[0],d[1])<1e-6) return c;
+  return hitNode(n, c, d);
+}
+const anchorsOf = n => ANCHORS.map(p=>anchorPoint(n,p));
+// Direzioni di uscita (solo orizzontali o verticali) da un punto del contorno:
+// dagli spigoli due possibili, dai lati una; mai in diagonale
+function exitDirs(n, P){
+  const u=(P[0]-n.x)/(n.w||1), v=(P[1]-n.y)/(n.h||1), e=0.03, out=[];
+  if (v<e) out.push([0,-1]);
+  if (v>1-e) out.push([0,1]);
+  if (u<e) out.push([-1,0]);
+  if (u>1-e) out.push([1,0]);
+  if (!out.length){
+    const dx=u-.5, dy=v-.5;
+    if (Math.abs(dx) >= Math.abs(dy)*0.5) out.push([Math.sign(dx)||1, 0]);
+    if (Math.abs(dy) >= Math.abs(dx)*0.5) out.push([0, Math.sign(dy)||1]);
+  }
+  return out;
+}
+function closestOnPoly(p, poly){
+  let best=null, bd=Infinity;
+  for (let i=0;i<poly.length;i++){
+    const a=poly[i], b=poly[(i+1)%poly.length], dx=b[0]-a[0], dy=b[1]-a[1], l2=dx*dx+dy*dy;
+    const t=l2 ? clamp(((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l2, 0, 1) : 0, q=[a[0]+t*dx, a[1]+t*dy], d=dist(p,q);
+    if (d<bd){ bd=d; best=q; }
+  }
+  return {q:best, d:bd};
+}
+function insidePoly(p, poly){
+  let c=false;
+  for (let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const a=poly[i], b=poly[j];
+    if ((a[1]>p[1])!==(b[1]>p[1]) && p[0] < (b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0]) c=!c;
+  }
+  return c;
+}
+// Aggancio sotto il puntatore: punto di aggancio, punto intermedio sul contorno o forma intera
+function snapTarget(w, k, excludeId){
+  const nodes=S.nodes.filter(n=>n.id!==excludeId).reverse();
+  let best=null;
+  for (const n of nodes) ANCHORS.forEach(p=>{ const d=dist(anchorPoint(n,p), w); if (d<11/k && (!best || d<best.d)) best={n, p:p.slice(), d, kind:'anchor'}; });
+  if (best) return best;
+  for (const n of nodes){
+    const c=closestOnPoly(w, outline(n));
+    const r3=v=>Math.round(clamp(v,0,1)*1000)/1000;
+    if (c.d<8/k) return {n, p:[r3((c.q[0]-n.x)/(n.w||1)), r3((c.q[1]-n.y)/(n.h||1))], kind:'side'};
+  }
+  for (const n of nodes) if (insidePoly(w, outline(n))) return {n, kind:'auto'};
+  return null;
+}
+// Aggancio di un estremo disegnato: fisso solo se il tratto finisce chiaramente su uno spigolo
+function endRefFor(n, pt, k){
+  const tol=Math.max(14/k, 0.15*Math.min(n.w,n.h));
+  let best=null, bd=Infinity;
+  for (const p of ANCHORS){ const d=dist(anchorPoint(n,p), pt); if (d<bd){ bd=d; best=p; } }
+  return best && bd<tol && best[0]!==.5 && best[1]!==.5 ? {n:n.id, p:best.slice()} : {n:n.id};
+}
 function simplifyOrth(pts){
   const out=[];
   for (const p of pts){
@@ -827,65 +897,86 @@ function simplifyOrth(pts){
   }
   return out;
 }
-// Percorso ortogonale con lati di uscita/entrata fissati (come disegnato)
-function routeSides(a, sA, b, sB, um){
-  const G=20, dA=DIRS[sA], dB=DIRS[sB];
-  const pa=hitNode(a, center(a), dA), pb=hitNode(b, center(b), dB);
-  const dot=(u,v)=>u[0]*v[0]+u[1]*v[1], sub=(p,q)=>[p[0]-q[0], p[1]-q[1]];
-  const vA=dA[0]===0, vB=dB[0]===0;
-  if (vA!==vB){
-    const c = vA ? [pa[0], pb[1]] : [pb[0], pa[1]];
-    if (dot(sub(c,pa),dA)>0 && dot(sub(pb,c),dB)<0) return [pa, c, pb];
-  } else if (dA[0]===-dB[0] && dA[1]===-dB[1] && dot(sub(pb,pa),dA)>2*G){
-    if (vA){ const my=(pa[1]+pb[1])/2; return simplifyOrth([pa,[pa[0],my],[pb[0],my],pb]); }
-    const mx=(pa[0]+pb[0])/2; return simplifyOrth([pa,[mx,pa[1]],[mx,pb[1]],pb]);
-  } else if (dA[0]===dB[0] && dA[1]===dB[1]){
-    const has=typeof um==='number';
-    if (vA){ let y = dA[1]>0 ? Math.max(pa[1],pb[1])+G : Math.min(pa[1],pb[1])-G; if (has) y = dA[1]>0 ? Math.max(y,um) : Math.min(y,um); return [pa,[pa[0],y],[pb[0],y],pb]; }
-    let x = dA[0]>0 ? Math.max(pa[0],pb[0])+G : Math.min(pa[0],pb[0])-G; if (has) x = dA[0]>0 ? Math.max(x,um) : Math.min(x,um); return [pa,[x,pa[1]],[x,pb[1]],pb];
+// Percorsi ortogonali candidati da pa (direzione dA) a pb (direzione uscente dB, o null se pb è libero)
+function orthCandidates(pa, dA, pb, dB, um){
+  const G=20, out=[], dot=(u,v)=>u[0]*v[0]+u[1]*v[1], sub=(p,q)=>[p[0]-q[0], p[1]-q[1]];
+  const vA=dA[0]===0, p1=[pa[0]+dA[0]*G, pa[1]+dA[1]*G];
+  if (!dB){
+    for (const c of [[pa[0],pb[1]], [pb[0],pa[1]]]) if (dot(sub(c,pa),dA)>0) out.push([pa,c,pb]);
+    out.push([pa,p1,[p1[0],pb[1]],pb], [pa,p1,[pb[0],p1[1]],pb]);
+    if (Math.abs(pa[0]-pb[0])<0.5 || Math.abs(pa[1]-pb[1])<0.5) out.push([pa,pb]);
+    return out;
   }
-  const p1=[pa[0]+dA[0]*G, pa[1]+dA[1]*G], p2=[pb[0]+dB[0]*G, pb[1]+dB[1]*G];
-  const c = vA ? [p1[0], p2[1]] : [p2[0], p1[1]];
-  return simplifyOrth([pa, p1, c, p2, pb]);
+  const vB=dB[0]===0, p2=[pb[0]+dB[0]*G, pb[1]+dB[1]*G];
+  if (vA!==vB){
+    const c=vA ? [pa[0],pb[1]] : [pb[0],pa[1]];
+    if (dot(sub(c,pa),dA)>0 && dot(sub(pb,c),dB)<0) out.push([pa,c,pb]);
+  } else if (dA[0]===-dB[0] && dA[1]===-dB[1] && dot(sub(pb,pa),dA)>0){
+    if (vA){ const my=(pa[1]+pb[1])/2; out.push([pa,[pa[0],my],[pb[0],my],pb]); }
+    else { const mx=(pa[0]+pb[0])/2; out.push([pa,[mx,pa[1]],[mx,pb[1]],pb]); }
+  } else if (dA[0]===dB[0] && dA[1]===dB[1]){
+    // percorso a U; con um conserva la profondità disegnata
+    let t = vA ? (dA[1]>0 ? Math.max(pa[1],pb[1])+G : Math.min(pa[1],pb[1])-G) : (dA[0]>0 ? Math.max(pa[0],pb[0])+G : Math.min(pa[0],pb[0])-G);
+    if (typeof um==='number') t = (vA?dA[1]:dA[0])>0 ? Math.max(t,um) : Math.min(t,um);
+    const u = vA ? [pa,[pa[0],t],[pb[0],t],pb] : [pa,[t,pa[1]],[t,pb[1]],pb];
+    if (typeof um==='number') return [u];
+    out.push(u);
+  }
+  const mx=(p1[0]+p2[0])/2, my=(p1[1]+p2[1])/2;
+  out.push([pa,p1,[p1[0],p2[1]],p2,pb], [pa,p1,[p2[0],p1[1]],p2,pb],
+           [pa,p1,[mx,p1[1]],[mx,p2[1]],p2,pb], [pa,p1,[p1[0],my],[p2[0],my],p2,pb]);
+  return out;
 }
-function orthRoute(A, B, via, e){
-  if (A.node && B.node && e && DIRS[e.sA] && DIRS[e.sB]) return routeSides(A.node, e.sA, B.node, e.sB, e.um);
+function segHitsBox(a, b, n){
+  const m=1.5, x0=Math.min(a[0],b[0]), x1=Math.max(a[0],b[0]), y0=Math.min(a[1],b[1]), y1=Math.max(a[1],b[1]);
+  return x1>n.x+m && x0<n.x+n.w-m && y1>n.y+m && y0<n.y+n.h-m;
+}
+// Il segmento entra nella forma? (contorno vero, non il riquadro: conta per rombi, parallelogrammi…)
+function segCrossesNode(a, b, n){
+  if (!segHitsBox(a, b, n)) return false;
+  const poly=outline(n), dx=b[0]-a[0], dy=b[1]-a[1], len=Math.hypot(dx,dy);
+  if (len<1) return false;
+  for (let i=0;i<poly.length;i++){
+    const p=poly[i], q=poly[(i+1)%poly.length], ex=q[0]-p[0], ey=q[1]-p[1], den=dx*ey-dy*ex;
+    if (Math.abs(den)<1e-9) continue;
+    const t=((p[0]-a[0])*ey-(p[1]-a[1])*ex)/den, u=((p[0]-a[0])*dy-(p[1]-a[1])*dx)/den;
+    if (u>=0 && u<=1 && t*len>1.5 && (1-t)*len>1.5) return true;
+  }
+  const m=[(a[0]+b[0])/2, (a[1]+b[1])/2];
+  return insidePoly(m, poly) && closestOnPoly(m, poly).d>1;
+}
+// Punteggio: lunghezza + curve, forte penalità se il percorso attraversa le forme
+function routeScore(r, avoid){
+  const s=simplifyOrth(r); let len=0, cross=0;
+  for (let i=1;i<s.length;i++){
+    len+=Math.abs(s[i][0]-s[i-1][0])+Math.abs(s[i][1]-s[i-1][1]);
+    for (const n of avoid) if (segCrossesNode(s[i-1], s[i], n)) cross++;
+  }
+  return len + 25*(s.length-2) + 2000*cross;
+}
+// Candidati di un estremo agganciato: il punto fisso oppure (aggancio automatico) le 4 metà dei lati
+function endCandidates(ref, n){
+  const ps = ref.p ? [ref.p] : SIDE_MIDS;
+  return ps.map(p=>{ const pt=anchorPoint(n,p); return {pt, dirs:exitDirs(n,pt)}; });
+}
+function orthRoute(A, B, e){
   if (A.node && B.node){
-    const a=A.node, b=B.node, ac=center(a), bc=center(b), dx=bc[0]-ac[0], dy=bc[1]-ac[1];
-    const ox0=Math.max(a.x,b.x), ox1=Math.min(a.x+a.w,b.x+b.w), oy0=Math.max(a.y,b.y), oy1=Math.min(a.y+a.h,b.y+b.h);
-    if (Math.abs(dy) >= Math.abs(dx)){
-      const sy=Math.sign(dy)||1;
-      if (ox1-ox0 > 10){
-        const xx = Math.abs(dx)<4 ? ac[0] : clamp((ac[0]+bc[0])/2, ox0+5, ox1-5);
-        return [hitNode(a,[xx,ac[1]],[0,sy]), hitNode(b,[xx,bc[1]],[0,-sy])];
-      }
-      const pa=hitNode(a,ac,[0,sy]), pb=hitNode(b,bc,[0,-sy]);
-      if ((pb[1]-pa[1])*sy > 8){ const my=(pa[1]+pb[1])/2; return [pa,[pa[0],my],[pb[0],my],pb]; }
-      const qa=hitNode(a,ac,[Math.sign(dx)||1,0]); return [qa,[bc[0],qa[1]],hitNode(b,bc,[0,qa[1]<bc[1]?-1:1])];
-    } else {
-      const sx=Math.sign(dx)||1;
-      if (oy1-oy0 > 10){
-        const yy = Math.abs(dy)<4 ? ac[1] : clamp((ac[1]+bc[1])/2, oy0+5, oy1-5);
-        return [hitNode(a,[ac[0],yy],[sx,0]), hitNode(b,[bc[0],yy],[-sx,0])];
-      }
-      const pa=hitNode(a,ac,[sx,0]), pb=hitNode(b,bc,[-sx,0]);
-      if ((pb[0]-pa[0])*sx > 8){ const mx=(pa[0]+pb[0])/2; return [pa,[mx,pa[1]],[mx,pb[1]],pb]; }
-      const qa=hitNode(a,ac,[0,Math.sign(dy)||1]); return [qa,[qa[0],bc[1]],hitNode(b,bc,[qa[0]<bc[0]?-1:1,0])];
-    }
+    const ca=endCandidates(e.a, A.node), cb=endCandidates(e.b, B.node), avoid=[A.node, B.node];
+    let best=null, bs=Infinity;
+    for (const a of ca) for (const da of a.dirs) for (const b of cb) for (const db of b.dirs)
+      for (const r of orthCandidates(a.pt, da, b.pt, db, e.um)){ const sc=routeScore(r, avoid); if (sc<bs){ bs=sc; best=r; } }
+    return simplifyOrth(best);
   }
   if (A.node || B.node){
-    const rev=!A.node, N=(rev?B:A).node, P=(rev?A:B).p, c=center(N);
-    let pts;
-    if (Math.abs(P[1]-c[1]) > Math.abs(P[0]-c[0])){
-      const sy=Math.sign(P[1]-c[1])||1;
-      pts = Math.abs(P[0]-c[0]) < N.w/2-4 ? [hitNode(N,[P[0],c[1]],[0,sy]), P] : [hitNode(N,c,[0,sy]), [c[0],P[1]], P];
-    } else {
-      const sx=Math.sign(P[0]-c[0])||1;
-      pts = Math.abs(P[1]-c[1]) < N.h/2-4 ? [hitNode(N,[c[0],P[1]],[sx,0]), P] : [hitNode(N,c,[sx,0]), [P[0],c[1]], P];
-    }
-    return rev ? pts.reverse() : pts;
+    const rev=!A.node, N=(rev?B:A).node, ref=rev?e.b:e.a, P=(rev?A:B).p;
+    let best=null, bs=Infinity;
+    for (const a of endCandidates(ref, N)) for (const da of a.dirs)
+      for (const r of orthCandidates(a.pt, da, P, null)){ const sc=routeScore(r, [N]); if (sc<bs){ bs=sc; best=r; } }
+    best=simplifyOrth(best);
+    return rev ? best.reverse() : best;
   }
-  if (via && via.length) return [A.p, ...via, B.p];
+  const via=e.via||[];
+  if (via.length) return [A.p, ...via, B.p];
   if (Math.abs(A.p[0]-B.p[0])<2 || Math.abs(A.p[1]-B.p[1])<2) return [A.p, B.p];
   return [A.p, [B.p[0], A.p[1]], B.p];
 }
@@ -901,10 +992,11 @@ function edgeGeom(e, getNode=nodeById){
   const via=e.via||[];
   let pts, d, sample;
   if (e.style==='orth'){
-    pts=orthRoute(A, B, via, e);
+    pts=orthRoute(A, B, e);
     d='M'+pts.map(p=>`${r1(p[0])} ${r1(p[1])}`).join('L'); sample=pts;
   } else if (e.style==='curve'){
-    const pa=A.node?clipToNode(A.node, B.p):A.p, pb=B.node?clipToNode(B.node, A.p):B.p;
+    const fa=A.node&&e.a.p?anchorPoint(A.node,e.a.p):null, fb=B.node&&e.b.p?anchorPoint(B.node,e.b.p):null;
+    const pa=fa||(A.node?clipToNode(A.node, fb||B.p):A.p), pb=fb||(B.node?clipToNode(B.node, fa||A.p):B.p);
     const dx=pb[0]-pa[0], dy=pb[1]-pa[1];
     const c1 = Math.abs(dx)>Math.abs(dy) ? [pa[0]+dx/2, pa[1]] : [pa[0], pa[1]+dy/2];
     const c2 = Math.abs(dx)>Math.abs(dy) ? [pb[0]-dx/2, pb[1]] : [pb[0], pb[1]-dy/2];
@@ -912,8 +1004,9 @@ function edgeGeom(e, getNode=nodeById){
     sample=bezPts(pa,c1,c2,pb); pts=[pa,pb];
   } else {
     const usevia = e.style==='poly' ? via : [];
-    const pa=A.node?clipToNode(A.node, usevia.length?usevia[0]:B.p):A.p;
-    const pb=B.node?clipToNode(B.node, usevia.length?usevia[usevia.length-1]:A.p):B.p;
+    const fa=A.node&&e.a.p?anchorPoint(A.node,e.a.p):null, fb=B.node&&e.b.p?anchorPoint(B.node,e.b.p):null;
+    const pa=fa||(A.node?clipToNode(A.node, usevia.length?usevia[0]:(fb||B.p)):A.p);
+    const pb=fb||(B.node?clipToNode(B.node, usevia.length?usevia[usevia.length-1]:(fa||A.p)):B.p);
     pts=[pa, ...usevia, pb];
     if (e.style==='poly' && pts.length>2){
       // Catmull-Rom → curve di Bézier morbide che passano per i punti
@@ -934,7 +1027,7 @@ function edgeGeom(e, getNode=nodeById){
 
 /* ---------------- 5. Rendering ---------------- */
 const board=$('#board'), vp=$('#vp'), defs=$('#defs');
-const L={nodes:$('#lNodes'), edges:$('#lEdges'), texts:$('#lTexts'), inks:$('#lInks'), sel:$('#lSel')};
+const L={nodes:$('#lNodes'), edges:$('#lEdges'), labels:$('#lLabels'), texts:$('#lTexts'), inks:$('#lInks'), sel:$('#lSel')};
 function el(tag, attrs, parent){
   const e=document.createElementNS(NS, tag);
   for (const k in attrs) if (attrs[k]!==undefined && attrs[k]!==null && attrs[k]!=='') e.setAttribute(k, attrs[k]);
@@ -1053,8 +1146,9 @@ function drawNode(n, parent){
     if (n.text){
       const lines=wrapText(n.text, Math.max(n.w*2, 130), fs), cy=n.y+n.h+6+lines.length*fs*0.6;
       const tw=Math.max(...lines.map(l=>textW(l,fs)))+8, th2=lines.length*fs*1.2+2;
-      el('rect', {x:r1(n.x+n.w/2-tw/2), y:r1(cy-th2/2), width:r1(tw), height:r1(th2), rx:3, fill:'#ffffff', 'fill-opacity':0.9}, g);
-      drawLines(g, lines, n.x+n.w/2, cy, fs, c.text);
+      const lg=el('g', {'data-id':n.id}, L.labels);
+      el('rect', {x:r1(n.x+n.w/2-tw/2), y:r1(cy-th2/2), width:r1(tw), height:r1(th2), rx:3, fill:'#ffffff', 'fill-opacity':0.9}, lg);
+      drawLines(lg, lines, n.x+n.w/2, cy, fs, c.text);
     }
   } else {
     el('path', {d:shapePath(n), fill:c.fill, stroke:c.stroke, 'stroke-width':1.5, 'stroke-dasharray':n.dash?'7 4':'', 'stroke-linejoin':'round'}, g);
@@ -1131,8 +1225,22 @@ function itemBBox(id){
   const g=elMap.get(id); if (g && g.getBBox){ try{ const b=g.getBBox(); return {x:b.x,y:b.y,w:b.width,h:b.height}; }catch(e){} }
   return null;
 }
+// Punti di aggancio di una forma: piccole croci blu (come in Visio), trascinabili per creare un connettore
+function drawAnchors(n, s, k){
+  anchorsOf(n).forEach((p,i)=>{
+    const r=3.5/k;
+    el('path', {d:`M${p[0]-r} ${p[1]-r}L${p[0]+r} ${p[1]+r}M${p[0]-r} ${p[1]+r}L${p[0]+r} ${p[1]-r}`, stroke:'#2563eb', 'stroke-width':1.6/k, 'pointer-events':'none'}, s);
+    el('circle', {cx:p[0], cy:p[1], r:6/k, fill:'transparent', 'data-handle':'anchor', 'data-for':n.id, 'data-ai':i, style:'cursor:crosshair'}, s);
+  });
+}
 function drawSelection(){
   const k=view.k, s=L.sel;
+  // forme di cui mostrare i punti di aggancio: selezionate, sotto il puntatore, collegate al connettore selezionato
+  const show=new Set();
+  if (tool==='select'){
+    for (const id of sel){ const o=findAny(id); if (!o) continue; if (o.w!==undefined) show.add(o.id); if (o.a){ if (o.a.n) show.add(o.a.n); if (o.b.n) show.add(o.b.n); } }
+    if (hoverId) show.add(hoverId);
+  }
   for (const id of sel){
     const o=findAny(id); if (!o) continue;
     if (o.a){ // connettore
@@ -1142,12 +1250,20 @@ function drawSelection(){
         el('circle', {cx:p[0], cy:p[1], r:6/k, fill:'#fff', stroke:'#3b82f6', 'stroke-width':2/k, 'data-handle':'end-'+end, 'data-for':id, style:'cursor:move'}, s);
     } else {
       const b=itemBBox(id); if (!b) continue;
-      el('rect', {x:b.x-4/k, y:b.y-4/k, width:b.w+8/k, height:b.h+8/k, fill:'none', stroke:'#3b82f6', 'stroke-width':1.5/k, 'stroke-dasharray':`${5/k} ${3/k}`, 'pointer-events':'none'}, s);
+      const m=(o.w!==undefined ? 9 : 4)/k;   // margine: le maniglie non coprono i punti di aggancio
+      el('rect', {x:b.x-m, y:b.y-m, width:b.w+2*m, height:b.h+2*m, fill:'none', stroke:'#3b82f6', 'stroke-width':1.5/k, 'stroke-dasharray':`${5/k} ${3/k}`, 'pointer-events':'none'}, s);
       if (o.w!==undefined && sel.size===1){
-        for (const [hn,hx,hy] of [['nw',o.x,o.y],['ne',o.x+o.w,o.y],['sw',o.x,o.y+o.h],['se',o.x+o.w,o.y+o.h]])
-          el('rect', {x:hx-5/k, y:hy-5/k, width:10/k, height:10/k, fill:'#fff', stroke:'#3b82f6', 'stroke-width':1.5/k, 'data-handle':hn, 'data-for':id, style:`cursor:${hn==='nw'||hn==='se'?'nwse':'nesw'}-resize`}, s);
+        for (const [hn,hx,hy] of [['nw',o.x-m,o.y-m],['ne',o.x+o.w+m,o.y-m],['sw',o.x-m,o.y+o.h+m],['se',o.x+o.w+m,o.y+o.h+m]])
+          el('rect', {x:hx-4.5/k, y:hy-4.5/k, width:9/k, height:9/k, fill:'#fff', stroke:'#3b82f6', 'stroke-width':1.5/k, 'data-handle':hn, 'data-for':id, style:`cursor:${hn==='nw'||hn==='se'?'nwse':'nesw'}-resize`}, s);
       }
     }
+  }
+  for (const id of show){ const n=nodeById(id); if (n) drawAnchors(n, s, k); }
+  // trascinando un estremo: evidenzia in verde il punto dove si aggancerà
+  if (gesture && gesture.type==='endpoint' && gesture.snap){
+    const sn=gesture.snap;
+    if (sn.p){ const p=anchorPoint(sn.n, sn.p); el('circle', {cx:p[0], cy:p[1], r:6/k, fill:'#22c55e', 'fill-opacity':0.35, stroke:'#16a34a', 'stroke-width':2/k, 'pointer-events':'none'}, s); }
+    else el('path', {d:shapePath(sn.n), fill:'none', stroke:'#16a34a', 'stroke-width':3/k, 'pointer-events':'none'}, s);
   }
   if (gesture && gesture.type==='rubber'){
     const a=gesture.start, b=gesture.cur;
@@ -1156,11 +1272,11 @@ function drawSelection(){
 }
 
 /* ---------------- 6. Interazione ---------------- */
-let gesture=null, penSeen=false, spaceDown=false, lastClick={id:null,t:0}, autoTimer=null, busy=false;
+let gesture=null, penSeen=false, spaceDown=false, lastClick={id:null,t:0}, autoTimer=null, busy=false, hoverId=null;
 const pointers=new Map();
 function toWorld(e){ const r=board.getBoundingClientRect(); return [(e.clientX-r.left-view.x)/view.k, (e.clientY-r.top-view.y)/view.k]; }
 function setTool(t){
-  tool=t; if (t!=='select') sel.clear();
+  tool=t; hoverId=null; if (t!=='select') sel.clear();
   document.querySelectorAll('#tools .btn').forEach(b=>b.classList.toggle('on', b.dataset.tool===t));
   board.setAttribute('class', 't-'+t);
   const mb=$('#modeBadge');
@@ -1199,7 +1315,15 @@ board.addEventListener('pointerdown', e=>{
 });
 board.addEventListener('pointermove', e=>{
   const pp=pointers.get(e.pointerId); if (pp){ pp.x=e.clientX; pp.y=e.clientY; }
-  if (!gesture) return;
+  if (!gesture){
+    if (tool==='select' && e.pointerType!=='touch'){
+      const h=e.target.closest && (e.target.closest('[data-handle]') || e.target.closest('#vp [data-id]'));
+      let id=h ? (h.dataset.for || h.dataset.id) : null;
+      if (id && !nodeById(id)) id=null;
+      if (id!==hoverId){ hoverId=id; render(); }
+    }
+    return;
+  }
   const g=gesture;
   if (g.type==='pinch'){
     const t=[...pointers.values()].filter(p=>p.type==='touch'); if (t.length<2) return;
@@ -1288,6 +1412,13 @@ function selectDown(e, w){
   const h=e.target.closest && e.target.closest('[data-handle]');
   if (h){
     const id=h.dataset.for, o=findAny(id), hn=h.dataset.handle;
+    if (hn==='anchor'){
+      // nuovo connettore che parte da questo punto di aggancio
+      const ed={id:uid('e'), a:{n:id, p:ANCHORS[+h.dataset.ai].slice()}, b:{x:r1(w[0]), y:r1(w[1])}, style:'orth', arrowA:false, arrowB:true, text:''};
+      S.edges.push(ed); sel=new Set([ed.id]);
+      gesture={type:'endpoint', id:ed.id, end:'b', created:true}; render();
+      return;
+    }
     if (hn.startsWith('end-')) gesture={type:'endpoint', id, end:hn.slice(4)};
     else gesture={type:'resize', id, hn, o0:{x:o.x,y:o.y,w:o.w,h:o.h}};
     return;
@@ -1326,7 +1457,7 @@ function selectMove(e, w){
       else if (it.a){
         for (const end of ['a','b']) if (!it[end].n) it[end]={x:o0[end].x+dx, y:o0[end].y+dy};
         if (o0.via) it.via=o0.via.map(p=>[p[0]+dx, p[1]+dy]);
-        if (typeof o0.um==='number') it.um=o0.um+('tb'.includes(it.sA)?dy:dx);
+        if (typeof o0.um==='number') it.um=o0.um+(it.ua==='x'?dx:dy);
       }
     }
     render();
@@ -1337,7 +1468,13 @@ function selectMove(e, w){
     if (g.hn.includes('n')) y0=Math.min(py, y1-16); else y1=Math.max(py, y0+16);
     Object.assign(n, {x:x0, y:y0, w:x1-x0, h:y1-y0}); g.moved=true; render();
   } else if (g.type==='endpoint'){
-    const ed=findAny(g.id); ed[g.end]={x:r1(w[0]), y:r1(w[1])}; g.moved=true; render();
+    // aggancio: punto di aggancio (spigolo o metà lato), punto intermedio del contorno, forma intera o libero
+    const ed=findAny(g.id), other=ed[g.end==='a'?'b':'a'];
+    const sn=snapTarget(w, view.k, other.n);
+    g.snap=sn; hoverId=sn ? sn.n.id : null;
+    ed[g.end] = sn ? (sn.p ? {n:sn.n.id, p:sn.p} : {n:sn.n.id}) : {x:r1(w[0]), y:r1(w[1])};
+    delete ed.um; delete ed.ua;
+    g.moved=true; render();
   } else if (g.type==='rubber'){
     g.cur=w;
     const x0=Math.min(g.start[0],w[0]), x1=Math.max(g.start[0],w[0]), y0=Math.min(g.start[1],w[1]), y1=Math.max(g.start[1],w[1]);
@@ -1351,10 +1488,8 @@ function selectMove(e, w){
 function selectUp(g){
   if (g.type==='rubber'){ render(); return; }
   if (g.type==='endpoint'){
-    const ed=findAny(g.id), p=[ed[g.end].x, ed[g.end].y];
-    const other=ed[g.end==='a'?'b':'a'].n;
-    const n=attachAt(p, S.nodes.filter(x=>x.id!==other), view.k);
-    if (n) ed[g.end]={n:n.id};
+    hoverId=null;
+    if (g.created && !g.moved){ S.edges=S.edges.filter(x=>x.id!==g.id); sel.clear(); render(); return; }
     commit(); return;
   }
   if (g.moved) commit(); else render();
@@ -1445,7 +1580,7 @@ function duplicateSel(){
     add.push(c); (o.pts?S.inks:o.w!==undefined?S.nodes:S.texts).push(c); }
   for (const id of sel){ const o=findAny(id); if (!o || !o.a) continue;
     const c=JSON.parse(JSON.stringify(o)); c.id=uid('e'); delete c._geo;
-    for (const end of ['a','b']){ if (c[end].n) c[end] = map.has(c[end].n) ? {n:map.get(c[end].n)} : c[end]; else { c[end].x+=20; c[end].y+=20; } }
+    for (const end of ['a','b']){ if (c[end].n){ if (map.has(c[end].n)) c[end].n=map.get(c[end].n); } else { c[end].x+=20; c[end].y+=20; } }
     add.push(c); S.edges.push(c); }
   sel=new Set(add.map(o=>o.id)); commit();
 }
@@ -1662,8 +1797,9 @@ function initProps(){
   buildSwatches($('#pFill'), FILLS, c=>changeSel(()=>selected('node').forEach(n=>{ if (c) n.fill=c; else delete n.fill; })));
   buildSwatches($('#pStroke'), STROKES, c=>changeSel(()=>selected('node').forEach(n=>{ if (c) n.stroke=c; else delete n.stroke; })));
   buildSwatches($('#pEColor'), ECOLORS, c=>changeSel(()=>selected('edge').forEach(e=>{ if (c) e.color=c; else delete e.color; })));
-  $('#pStyle').addEventListener('change', e=>changeSel(()=>selected('edge').forEach(x=>{ x.style=e.target.value; delete x.sA; delete x.sB; delete x.um; if (x.style==='poly' && !(x.via&&x.via.length)) x.style='straight'; })));
+  $('#pStyle').addEventListener('change', e=>changeSel(()=>selected('edge').forEach(x=>{ x.style=e.target.value; delete x.um; delete x.ua; if (x.style==='poly' && !(x.via&&x.via.length)) x.style='straight'; })));
   $('#pArrows').addEventListener('change', e=>changeSel(()=>selected('edge').forEach(x=>{ const v=e.target.value; x.arrowA=v==='start'||v==='both'; x.arrowB=v==='end'||v==='both'; })));
+  $('#pAuto').addEventListener('click', ()=>changeSel(()=>selected('edge').forEach(x=>{ for (const end of ['a','b']) if (x[end].n) x[end]={n:x[end].n}; delete x.um; delete x.ua; })));
   $('#pWidth').addEventListener('change', e=>changeSel(()=>selected('edge').forEach(x=>{ x.width=parseFloat(e.target.value); })));
   pf.addEventListener('change', ()=>changeSel(()=>[...selected('node'),...selected('edge'),...selected('text')].forEach(o=>{ o.fs=parseInt(pf.value,10); })));
   $('#pDash').addEventListener('change', e=>changeSel(()=>[...selected('node'),...selected('edge')].forEach(o=>{ o.dash=e.target.checked; })));
@@ -1746,12 +1882,23 @@ function validState(d){
     out.nodes.push({id:okId(n.id,'n'), type:n.type, x:n.x, y:n.y, w:Math.max(10,n.w), h:Math.max(10,n.h), text:str(n.text), fill:col(n.fill), stroke:col(n.stroke), fs:num(n.fs)?clamp(n.fs,6,96):undefined, dash:!!n.dash, dir:n.dir==='down'?'down':undefined});
   }
   const nid=new Set(out.nodes.map(n=>n.id));
-  const ref=r=>r && typeof r==='object' ? (typeof r.n==='string' && nid.has(r.n) ? {n:r.n} : (num(r.x)&&num(r.y) ? {x:r.x,y:r.y} : null)) : null;
+  const ref=(r,side)=>{
+    if (!r || typeof r!=='object') return null;
+    if (typeof r.n==='string' && nid.has(r.n)){
+      const o={n:r.n};
+      if (Array.isArray(r.p) && num(r.p[0]) && num(r.p[1])) o.p=[clamp(r.p[0],0,1), clamp(r.p[1],0,1)];
+      else if (typeof side==='string' && SIDE_P[side]) o.p=SIDE_P[side].slice();   // file della versione 1.1
+      return o;
+    }
+    return num(r.x)&&num(r.y) ? {x:r.x,y:r.y} : null;
+  };
   for (const e of Array.isArray(d.edges)?d.edges:[]){
-    const a=ref(e.a), b=ref(e.b); if (!a||!b) continue;
+    const a=ref(e.a, e.sA), b=ref(e.b, e.sB); if (!a||!b) continue;
     const via=Array.isArray(e.via) ? e.via.filter(p=>Array.isArray(p)&&num(p[0])&&num(p[1])).map(p=>[p[0],p[1]]) : undefined;
     out.edges.push({id:okId(e.id,'e'), a, b, style:['straight','orth','curve','poly'].includes(e.style)?e.style:'straight', arrowA:!!e.arrowA, arrowB:!!e.arrowB, text:str(e.text), color:col(e.color), width:num(e.width)?clamp(e.width,0.5,10):undefined, dash:!!e.dash, fs:num(e.fs)?clamp(e.fs,6,96):undefined, via,
-      sA:DIRS[e.sA]&&typeof e.sA==='string'?e.sA:undefined, sB:DIRS[e.sB]&&typeof e.sB==='string'?e.sB:undefined, um:num(e.um)?e.um:undefined});
+      um:num(e.um)?e.um:undefined, ua:e.ua==='x'?'x':num(e.um)?'y':undefined});
+    const last=out.edges[out.edges.length-1];
+    if (typeof e.sA==='string' && 'lr'.includes(e.sA) && num(e.um)) last.ua='x';
   }
   for (const t of Array.isArray(d.texts)?d.texts:[]){
     if (!num(t.x)||!num(t.y)) continue;
@@ -1804,7 +1951,7 @@ function buildExportSvg(){
   svg.setAttribute('viewBox', `${r1(b.x-m)} ${r1(b.y-m)} ${W} ${H}`);
   el('rect', {x:r1(b.x-m), y:r1(b.y-m), width:W, height:H, fill:'#ffffff'}, svg);
   svg.append(defs.cloneNode(true));
-  for (const k of ['nodes','edges','texts','inks']){ const c=L[k].cloneNode(true); c.removeAttribute('id'); svg.append(c); }
+  for (const k of ['nodes','edges','labels','texts','inks']){ const c=L[k].cloneNode(true); c.removeAttribute('id'); svg.append(c); }
   svg.querySelectorAll('.hit').forEach(x=>x.remove());
   svg.querySelectorAll('[data-id]').forEach(x=>x.removeAttribute('data-id'));
   sel=savedSel; render();
@@ -1848,8 +1995,7 @@ function exportDrawio(){
     const col=e.color||th.edge;
     let st=(e.style==='orth'?'edgeStyle=orthogonalEdgeStyle;rounded=0;':e.style==='curve'?'edgeStyle=orthogonalEdgeStyle;curved=1;':e.style==='poly'?'curved=1;':'')+
       `html=1;endArrow=${e.arrowB?'classic':'none'};startArrow=${e.arrowA?'classic':'none'};strokeColor=${col};strokeWidth=${e.width||1.6};fontSize=${e.fs||12};fontFamily=Calibri;`+(e.dash?'dashed=1;':'');
-    const XY={t:'0.5;Y=0',b:'0.5;Y=1',l:'0;Y=0.5',r:'1;Y=0.5'};
-    if (e.style==='orth' && XY[e.sA] && XY[e.sB]) st+=`exitX=${XY[e.sA].replace('Y=','exitY=')};entryX=${XY[e.sB].replace('Y=','entryY=')};`;
+    for (const [end,pre] of [['a','exit'],['b','entry']]) if (e[end].n && e[end].p) st+=`${pre}X=${e[end].p[0]};${pre}Y=${e[end].p[1]};${pre}Dx=0;${pre}Dy=0;`;
     let attrs=`id="${e.id}" value="${val(e.text)}" style="${xmlEsc(st)}" edge="1" parent="1"`;
     if (e.a.n) attrs+=` source="${e.a.n}"`; if (e.b.n) attrs+=` target="${e.b.n}"`;
     let geo='<mxGeometry relative="1" as="geometry">';
@@ -2051,7 +2197,15 @@ function runSelfTest(){
     ['collegamento fra due forme', R=>[...SK.rect(R,0,0,140,70), ...SK.rect(R,0,200,140,70), ...SK.arrow(R,[70,74],[70,196])],
       r=>r.nodes.length===2 && r.edges.length===1 && r.edges[0].a.n && r.edges[0].b.n && r.edges[0].arrowB],
     ['ritorno a U fra due forme', R=>[...SK.rect(R,0,0,140,70), ...SK.rect(R,260,0,140,70), ...SK.orthArrow(R,[[330,74],[330,150],[70,150],[70,76]])],
-      r=>r.edges.length===1 && r.edges[0].style==='orth' && r.edges[0].sA==='b' && r.edges[0].sB==='b' && r.edges[0].arrowB],
+      r=>r.edges.length===1 && r.edges[0].style==='orth' && String(r.edges[0].a.p)==='0.5,1' && String(r.edges[0].b.p)==='0.5,1' && r.edges[0].arrowB],
+    ['linea fra forme non allineate → ortogonale', R=>[...SK.rect(R,0,0,140,70), ...SK.rect(R,300,200,140,70), ...SK.line(R,[142,40],[298,230])],
+      r=>r.edges.length===1 && r.edges[0].style==='orth' && r.edges[0].a.n && r.edges[0].b.n],
+    ['parallelogramma → rettangolo affiancati: nessun giro', R=>[...SK.para(R,0,0,150,66), ...SK.rect(R,220,0,150,66), ...SK.arrow(R,[152,33],[216,33])],
+      r=>{ if (r.nodes.length!==2 || r.edges.length!==1) return false; const m=new Map(r.nodes.map(n=>[n.id,n])); const g=edgeGeom(r.edges[0], id=>m.get(id));
+        const top=Math.max(...r.nodes.map(n=>n.y)), bot=Math.min(...r.nodes.map(n=>n.y+n.h));
+        return g.pts.length<=4 && g.pts.every(p=>p[1]>=top && p[1]<=bot); }],
+    ['linea che parte da uno spigolo → aggancio allo spigolo', R=>[...SK.rect(R,0,0,140,70), ...SK.line(R,[141,71],[300,220])],
+      r=>r.edges.length===1 && String(r.edges[0].a.p)==='1,1'],
     ['scrittura a mano grande (non diventa forma)', R=>HW(SK.text(R,'NO',0,0,70)), r=>r.clusters.length===1 && !r.nodes.length && !r.edges.length],
     ['scrittura a mano dentro forma', R=>[...SK.rect(R,0,0,220,110), ...HW(SK.text(R,'OK',50,25,55))], r=>r.nodes.length===1 && !r.edges.length && r.clusters.length===1 && r.clusters[0].target.kind==='node'],
     ['scrittura: due parole = una scritta', R=>HW([...SK.text(R,'NO',0,0,30), ...SK.text(R,'SI',75,2,30)]), r=>r.clusters.length===1 && !r.nodes.length],
@@ -2075,6 +2229,40 @@ function runSelfTest(){
     tot+=5; ok+=pass;
     lines.push(`${pass===5?'✔':'✘'} ${name}: ${pass}/5${fails.length?'   ['+fails.join('; ')+']':''}`);
   }
+  // --- connettori: 8 punti di aggancio, percorsi senza diagonali, punti intermedi ---
+  const geo=[];
+  {
+    const types=['rect','round','ellipse','diamond','parallelogram','triangle','hexagon','document','cylinder','cloud','router','server'];
+    const R=rng(42), nodes=[];
+    for (let i=0;i<12;i++){ const t=types[i%types.length], [w,h]=DEF_SIZE[t]; nodes.push({id:'n'+(900+i), type:t, x:Math.round(R()*900), y:Math.round(R()*700), w, h}); }
+    const nm=new Map(nodes.map(n=>[n.id,n])), gn=id=>nm.get(id);
+    const onOutline=(n,p)=>closestOnPoly(p, outline(n)).d<0.6;
+    geo.push(['8 punti di aggancio sul contorno', nodes.every(n=>{ const a=anchorsOf(n); return a.length===8 && a.every(p=>onOutline(n,p)); })]);
+    const rc={type:'rect', x:0, y:0, w:100, h:60}, ra=anchorsOf(rc);
+    geo.push(['rettangolo: spigoli e metà dei lati', String(ra.map(p=>p.map(Math.round)))==='0,0,50,0,100,0,100,30,100,60,50,60,0,60,0,30']);
+    let diag=0, ends=0, cnt=0;
+    for (let i=0;i<nodes.length;i++) for (let j=0;j<nodes.length;j++){
+      if (i===j) continue;
+      const pa = (i+j)%3===0 ? ANCHORS[(i+j)%8] : null;
+      const e={a:pa?{n:nodes[i].id, p:pa}:{n:nodes[i].id}, b:{n:nodes[j].id}, style:'orth'};
+      const g=edgeGeom(e, gn); cnt++;
+      for (let q=1;q<g.pts.length;q++) if (Math.abs(g.pts[q][0]-g.pts[q-1][0])>0.5 && Math.abs(g.pts[q][1]-g.pts[q-1][1])>0.5) diag++;
+      const first=g.pts[0], last=g.pts[g.pts.length-1];
+      const okA = pa ? dist(first, anchorPoint(nodes[i],pa))<0.6 : anchorsOf(nodes[i]).some(p=>dist(p,first)<0.6);
+      const okB = anchorsOf(nodes[j]).some(p=>dist(p,last)<0.6);
+      if (!okA || !okB) ends++;
+    }
+    geo.push([`${cnt} connettori ortogonali senza tratti diagonali`, diag===0]);
+    geo.push(['estremi sui punti di aggancio', ends===0]);
+    const n0=nodes[0], mid=[n0.x+n0.w*0.3, n0.y];   // punto intermedio sul lato superiore
+    S.nodes=[n0];
+    const sn=snapTarget([mid[0], mid[1]+2], 1, null);
+    geo.push(['punto intermedio sul lato', !!sn && sn.kind==='side' && dist(anchorPoint(n0, sn.p), mid)<1]);
+    const big={...n0, w:n0.w*2, h:n0.h*2};
+    geo.push(['il punto intermedio segue il ridimensionamento', !!sn && dist(anchorPoint(big, sn.p), [big.x+big.w*0.3, big.y])<1]);
+  }
+  lines.push('');
+  for (const [name, pass] of geo){ tot++; if (pass) ok++; lines.push(`${pass?'✔':'✘'} ${name}`); }
   lines.push(`\nTotale: ${ok}/${tot}`);
   S=JSON.parse(saved); S.seq=seqSaved; render();
   const out=$('#testOut'); out.textContent=lines.join('\n')+'\n\n(clic per chiudere)'; out.classList.add('open');

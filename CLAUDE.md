@@ -15,7 +15,9 @@ Pagina **HTML unica, locale e offline** (`visidraw.html`): lavagna a mano libera
 2. Geometria (resample, RDP, inviluppo convesso, poligoni inscritti, intersezioni raggio/poligono).
 3. Riconoscimento: `recognize(inks, nodes, edges)` è puro (non tocca lo stato) → nodes, edges, clusters di scritte, ink da tenere.
    Soglie in pixel dello schermo (ogni tratto salva lo zoom `k` al momento del disegno).
-4. Forme (`shapePath`, `outline`, `drawIcon`) e connettori (`edgeGeom`, `orthRoute`, `routeSides`).
+4. Forme (`shapePath`, `outline`, `drawIcon`) e connettori (`edgeGeom`, `orthRoute`, `orthCandidates`, `routeScore`).
+   Estremo agganciato = `{n}` (automatico, metà dei lati) o `{n, p:[u,v]}` (punto fisso relativo al riquadro,
+   proiettato sul contorno da `anchorPoint`; 8 punti in `ANCHORS`). Connettori agganciati: niente diagonali.
 5. Rendering SVG; 6. interazione; 7. file ed esportazioni (JSON validato da `validState`, SVG, PNG, draw.io); 8. autotest.
 Versione in `APP_VERSION` (aumentala a ogni rilascio).
 
