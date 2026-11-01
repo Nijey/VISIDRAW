@@ -45,6 +45,12 @@ Modalità **Auto**: forme e linee vengono elaborate da sole dopo una pausa. Menu
 | Tratti fatti in modalità Scrittura | sempre scritte da trascrivere, a qualunque dimensione |
 | Tratti piccoli (in modalità Forme) | scritte da trascrivere (dentro la forma → etichetta; vicino a un connettore → etichetta del connettore) |
 
+## Testo
+Carattere (Calibri, Arial, Consolas, Comic Sans, Ebrima) e dimensione si scelgono:
+- per tutto il diagramma in *Vista › Carattere*;
+- per gli oggetti selezionati nel pannello proprietà (strumento **Seleziona**);
+- per le scritte appena trascritte nella finestra di trascrizione.
+
 ## Salvataggio ed esportazione
 - **Salva/Apri** in JSON (`.visidraw.json`); salvataggio automatico nel browser.
 - **PNG** (alta risoluzione), **SVG** vettoriale, **draw.io** (`.drawio`): si apre in diagrams.net e da lì

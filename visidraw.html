@@ -100,6 +100,9 @@ button,select,input,textarea{font:inherit;color:inherit}
 .step svg{width:100%;height:70px;margin-top:6px}
 kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;font-size:12px}
 .tlist{display:grid;gap:8px;margin-top:10px}
+.trstyle{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--muted)}
+.trstyle select{padding:4px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--text)}
+#trPreview{color:var(--text);margin-left:auto;font-size:16px}
 .titem{display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 8px}
 .titem svg{width:160px;height:56px;background:#f8fafc;border-radius:6px}
 .titem input{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:15px}
@@ -111,7 +114,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
 #testOut{position:fixed;inset:20px;background:#fff;border:2px solid #334155;border-radius:12px;padding:16px;overflow:auto;z-index:80;font:13px/1.4 Consolas,monospace;display:none;white-space:pre-wrap}
 #testOut.open{display:block}
 #footer{position:absolute;left:10px;bottom:6px;font-size:11px;color:#94a3b8;pointer-events:none;z-index:3}
-@media (max-width:1480px){ .lbl2{display:none} }
+@media (max-width:1480px){ .lbl2{display:none} #bar{gap:4px} .grp{padding:1px} }
 @media (max-width:760px){
   #palette{position:absolute;top:0;bottom:0;left:0;z-index:8;box-shadow:4px 0 20px rgba(0,0,0,.15);display:none}
   #palette.open{display:block}
@@ -168,7 +171,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
       <button class="btn" id="bZoomOut" title="Riduci">−</button>
       <span id="zoomLbl">100%</span>
       <button class="btn" id="bZoomIn" title="Ingrandisci">+</button>
-      <button class="btn" id="bFit" title="Adatta alla finestra (F)">Adatta</button>
+      <button class="btn" id="bFit" title="Adatta alla finestra (F)">⤢<span class="lbl2"> Adatta</span></button>
     </div>
     <div class="grp">
       <button class="btn" id="bFile">File ▾</button>
@@ -196,6 +199,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
       <button class="btn" id="bView">Vista ▾</button>
       <div class="menu" id="mView">
         <label>Tema <select id="selTheme"><option value="visio">Blu professionale</option><option value="color">Colorato</option><option value="mono">Bianco e nero</option></select></label>
+        <label>Carattere <select id="selFont"></select></label>
         <label><input type="checkbox" id="cGrid" checked> Griglia</label>
         <label><input type="checkbox" id="cSnap" checked> Aggancia alla griglia</label>
         <label><input type="checkbox" id="cIcons" checked> Icone di rete dalle scritte</label>
@@ -246,6 +250,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
           <div class="row"><span>Spessore</span><select id="pWidth"><option value="1">Sottile</option><option value="1.6">Normale</option><option value="2.5">Spesso</option><option value="4">Molto spesso</option></select></div>
         </div>
         <div class="sec" id="pCommon">
+          <div class="row"><span>Carattere</span><select id="pFamily"></select></div>
           <div class="row"><span>Dimensione testo</span><select id="pFont"></select></div>
           <div class="row"><label class="chk" style="padding:0"><input type="checkbox" id="pDash"> Tratteggiato</label></div>
           <div class="acts"><button id="pFront" title="Porta in primo piano">In primo piano</button><button id="pDel" title="Elimina (Canc)">Elimina</button></div>
@@ -289,6 +294,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
     <h2>Trascrivi le scritte</h2>
     <p id="trInfo">Scrivi il testo corrispondente a ogni scritta a mano. Lascia vuoto per conservarla com'è (a mano libera).</p>
     <div class="tlist" id="trList"></div>
+    <div class="trstyle"><span>Carattere</span><select id="trFamily"></select><span>Dimensione</span><select id="trSize"><option value="">Automatica</option></select><span id="trPreview">Anteprima AaBb 123</span></div>
     <div class="foot">
       <label class="chk" style="margin-right:auto"><input type="checkbox" id="trIcons"> Converti in icone di rete (router, switch, server…)</label>
       <button class="btn" id="trKeep">Lascia tutto a mano</button>
@@ -312,14 +318,25 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
 const FONT = 'Calibri, Carlito, "Segoe UI", Arial, sans-serif';
+// Caratteri disponibili per i testi (con alternative se il carattere non è installato)
+const FONTS = {
+  'Calibri': FONT,
+  'Arial': 'Arial, Helvetica, "Liberation Sans", sans-serif',
+  'Consolas': 'Consolas, "Cascadia Mono", Menlo, "Courier New", monospace',
+  'Comic Sans MS': '"Comic Sans MS", "Comic Neue", "Chalkboard SE", cursive',
+  'Ebrima': 'Ebrima, "Segoe UI", Arial, sans-serif'
+};
+const FONT_SIZES=[10,11,12,14,16,18,20,24,28,32,40,48];
+const fontName = o => (o && FONTS[o.ff]) ? o.ff : (FONTS[S.font] ? S.font : 'Calibri');
+const ffOf = o => FONTS[fontName(o)];
 
 /* ---------------- 1. Stato ---------------- */
-function newState(){ return {nodes:[], edges:[], texts:[], inks:[], seq:1, theme:'visio'}; }
+function newState(){ return {nodes:[], edges:[], texts:[], inks:[], seq:1, theme:'visio', font:'Calibri'}; }
 let S = newState();
 let view = {x:0, y:0, k:1};
 let tool = 'pen';
@@ -1074,28 +1091,28 @@ function el(tag, attrs, parent){
   return e;
 }
 const MC=document.createElement('canvas').getContext('2d');
-function textW(s, fs){ MC.font=`${fs}px ${FONT}`; return MC.measureText(s).width; }
-function wrapText(text, maxW, fs){
+function textW(s, fs, ff=FONT){ MC.font=`${fs}px ${ff}`; return MC.measureText(s).width; }
+function wrapText(text, maxW, fs, ff=FONT){
   const out=[];
   for (const para of String(text).split('\n')){
     const words=para.split(/\s+/).filter(Boolean); let line='';
     if (!words.length){ out.push(''); continue; }
     for (let w of words){
-      while (textW(w, fs) > maxW && w.length>1){
-        let cut=w.length-1; while (cut>1 && textW(w.slice(0,cut)+'-', fs)>maxW) cut--;
+      while (textW(w, fs, ff) > maxW && w.length>1){
+        let cut=w.length-1; while (cut>1 && textW(w.slice(0,cut)+'-', fs, ff)>maxW) cut--;
         if (line){ out.push(line); line=''; }
         out.push(w.slice(0,cut)+'-'); w=w.slice(cut);
       }
       const t=line ? line+' '+w : w;
-      if (textW(t, fs) <= maxW || !line) line=t; else { out.push(line); line=w; }
+      if (textW(t, fs, ff) <= maxW || !line) line=t; else { out.push(line); line=w; }
     }
     out.push(line);
   }
   return out;
 }
-function drawLines(g, lines, cx, cy, fs, color, weight){
+function drawLines(g, lines, cx, cy, fs, color, ff=FONT){
   const lh=fs*1.2, y0=cy-(lines.length*lh)/2+fs*0.82;
-  const t=el('text', {x:r1(cx), y:r1(y0), 'text-anchor':'middle', 'font-size':fs, fill:color, 'font-family':FONT, 'font-weight':weight}, g);
+  const t=el('text', {x:r1(cx), y:r1(y0), 'text-anchor':'middle', 'font-size':fs, fill:color, 'font-family':ff}, g);
   lines.forEach((ln,i)=>{ const s=el('tspan', {x:r1(cx), y:r1(y0+i*lh)}, t); s.textContent=ln; });
   return t;
 }
@@ -1178,22 +1195,22 @@ function drawIcon(g, n, c){
   }
 }
 function drawNode(n, parent){
-  const g=el('g', {'data-id':n.id}, parent), c=colorsOf(n), fs=n.fs||14;
+  const g=el('g', {'data-id':n.id}, parent), c=colorsOf(n), fs=n.fs||14, ff=ffOf(n);
   if (isIcon(n.type)){
     el('rect', {x:n.x, y:n.y, width:n.w, height:n.h, fill:'transparent'}, g);
     drawIcon(g, n, c.fill);
     if (n.text){
-      const lines=wrapText(n.text, Math.max(n.w*2, 130), fs), cy=n.y+n.h+6+lines.length*fs*0.6;
-      const tw=Math.max(...lines.map(l=>textW(l,fs)))+8, th2=lines.length*fs*1.2+2;
+      const lines=wrapText(n.text, Math.max(n.w*2, 130), fs, ff), cy=n.y+n.h+6+lines.length*fs*0.6;
+      const tw=Math.max(...lines.map(l=>textW(l,fs,ff)))+8, th2=lines.length*fs*1.2+2;
       const lg=el('g', {'data-id':n.id}, L.labels);
       el('rect', {x:r1(n.x+n.w/2-tw/2), y:r1(cy-th2/2), width:r1(tw), height:r1(th2), rx:3, fill:'#ffffff', 'fill-opacity':0.9}, lg);
-      drawLines(lg, lines, n.x+n.w/2, cy, fs, c.text);
+      drawLines(lg, lines, n.x+n.w/2, cy, fs, c.text, ff);
     }
   } else {
     el('path', {d:shapePath(n), fill:c.fill, stroke:c.stroke, 'stroke-width':n.sw||1.5, 'stroke-dasharray':n.dash?'7 4':'', 'stroke-linejoin':'round'}, g);
     if (n.type==='cylinder'){ const ry=Math.min(n.h*0.15,14);
       el('path', {d:`M${n.x} ${n.y+ry}A${n.w/2} ${ry} 0 0 0 ${n.x+n.w} ${n.y+ry}`, fill:'none', stroke:c.stroke, 'stroke-width':n.sw||1.5}, g); }
-    if (n.text){ const b=labelBox(n); drawLines(g, wrapText(n.text, Math.max(b.w, 20), fs), b.cx, b.cy, fs, c.text); }
+    if (n.text){ const b=labelBox(n); drawLines(g, wrapText(n.text, Math.max(b.w, 20), fs, ff), b.cx, b.cy, fs, c.text, ff); }
   }
   elMap.set(n.id, g);
 }
@@ -1213,17 +1230,17 @@ function drawEdge(e, parent){
   el('path', {d:geo.d, fill:'none', stroke:col, 'stroke-width':w, 'stroke-linejoin':'round', 'stroke-linecap':'butt',
     'stroke-dasharray':e.dash?'7 4':'', 'marker-end':e.arrowB?markerFor(col):'', 'marker-start':e.arrowA?markerFor(col):''}, g);
   if (e.text){
-    const fs=e.fs||12, lines=wrapText(e.text, 160, fs), tw=Math.max(...lines.map(l=>textW(l,fs)))+8, th2=lines.length*fs*1.2+4;
+    const fs=e.fs||12, ff=ffOf(e), lines=wrapText(e.text, 160, fs, ff), tw=Math.max(...lines.map(l=>textW(l,fs,ff)))+8, th2=lines.length*fs*1.2+4;
     el('rect', {x:r1(geo.mid[0]-tw/2), y:r1(geo.mid[1]-th2/2), width:r1(tw), height:r1(th2), rx:3, fill:'#ffffff', 'fill-opacity':0.92}, g);
-    drawLines(g, lines, geo.mid[0], geo.mid[1], fs, (THEMES[S.theme]||THEMES.visio).text);
+    drawLines(g, lines, geo.mid[0], geo.mid[1], fs, (THEMES[S.theme]||THEMES.visio).text, ff);
   }
   elMap.set(e.id, g); e._geo=geo;
 }
 function drawText(t, parent){
   const g=el('g', {'data-id':t.id}, parent), fs=t.fs||16, lines=String(t.text).split('\n');
-  const tw=Math.max(...lines.map(l=>textW(l,fs)), 10), th2=lines.length*fs*1.2;
+  const ff=ffOf(t), tw=Math.max(...lines.map(l=>textW(l,fs,ff)), 10), th2=lines.length*fs*1.2;
   el('rect', {x:r1(t.x-tw/2-4), y:r1(t.y-th2/2-2), width:r1(tw+8), height:r1(th2+4), fill:'transparent'}, g);
-  drawLines(g, lines, t.x, t.y, fs, t.color||(THEMES[S.theme]||THEMES.visio).text);
+  drawLines(g, lines, t.x, t.y, fs, t.color||(THEMES[S.theme]||THEMES.visio).text, ff);
   elMap.set(t.id, g);
 }
 function inkPath(p){
@@ -1261,7 +1278,7 @@ function render(){
 }
 function itemBBox(id){
   const o=findAny(id); if (!o) return null;
-  if (o.w!==undefined) return {x:o.x, y:o.y, w:o.w, h:o.h + (isIcon(o.type)&&o.text ? 6+((o.fs||14)*1.2)*wrapText(o.text, Math.max(o.w*2,130), o.fs||14).length : 0)};
+  if (o.w!==undefined) return {x:o.x, y:o.y, w:o.w, h:o.h + (isIcon(o.type)&&o.text ? 6+((o.fs||14)*1.2)*wrapText(o.text, Math.max(o.w*2,130), o.fs||14, ffOf(o)).length : 0)};
   if (o.pts && !o.a){ const b=bboxOf(o.pts); return b; }
   const g=elMap.get(id); if (g && g.getBBox){ try{ const b=g.getBBox(); return {x:b.x,y:b.y,w:b.width,h:b.height}; }catch(e){} }
   return null;
@@ -1557,6 +1574,7 @@ function openEditor(o, isNew){
   const k=view.k, sw=Math.max(w*k, 140);
   editor.style.display='block';
   editor.style.fontSize=(fs*k)+'px';
+  editor.style.fontFamily=ffOf(o);
   editor.style.width=sw+'px';
   editor.value=o.text||'';
   editor.style.height='auto';
@@ -1711,27 +1729,31 @@ async function elaborate(auto){
     r.nodes.forEach(applyIconKeyword);
     if (!auto && r.clusters.length){
       render();
-      const texts=await transcribeDialog(r.clusters);
-      applyClusters(r.clusters, texts);
+      const res=await transcribeDialog(r.clusters);
+      applyClusters(r.clusters, res);
     }
     const nN=r.nodes.length, nE=r.edges.length;
     commit();
     if (!auto) toast(nN||nE||r.clusters.length ? `Fatto: ${nN} forme, ${nE} connettori${r.clusters.length?`, ${r.clusters.length} scritte`:''}.` : 'Nessuna forma riconosciuta: prova a disegnare tratti più grandi e chiusi.');
   } finally { busy=false; }
 }
-function applyClusters(clusters, texts){
+// res = {texts:[…], ff, fs} dalla finestra di trascrizione (null = lascia tutto a mano)
+function applyClusters(clusters, res){
+  const texts=res && res.texts, ff=res && res.ff, fs=res && res.fs;
+  const style=o=>{ if (fs) o.fs=fs; if (ff && ff!==S.font) o.ff=ff; else if (ff) delete o.ff; };
   clusters.forEach((c,i)=>{
     const txt=(texts && texts[i] || '').trim();
     if (!txt){ c.items.forEach(it=>{ it.ink.keep=true; S.inks.push(it.ink); }); return; }
     if (c.target.kind==='node'){
       const n=nodeById(c.target.id);
-      if (n){ n.text = n.text ? n.text+'\n'+txt : txt; applyIconKeyword(n); return; }
+      if (n){ n.text = n.text ? n.text+'\n'+txt : txt; style(n); applyIconKeyword(n); return; }
     }
     if (c.target.kind==='edge'){
       const e=S.edges.find(x=>x.id===c.target.id);
-      if (e){ e.text = e.text ? e.text+' '+txt : txt; return; }
+      if (e){ e.text = e.text ? e.text+' '+txt : txt; style(e); return; }
     }
     const t={id:uid('t'), x:snapV(c.b.cx), y:snapV(c.b.cy), text:txt, fs:clamp(Math.round(c.b.h*0.6), 12, 28)};
+    style(t);
     const st=inkStyle(c.items[0].ink); if (st.color) t.color=st.color;
     S.texts.push(t);
   });
@@ -1760,6 +1782,12 @@ function transcribeDialog(clusters){
   return new Promise(resolve=>{
     const md=$('#mdTrans'), list=$('#trList'); list.replaceChildren();
     $('#trIcons').checked=opt.icons;
+    // carattere e dimensione per tutte le scritte di questa elaborazione (l'ultima scelta viene ricordata)
+    const fam=$('#trFamily'), size=$('#trSize'), prev=$('#trPreview');
+    fam.value = FONTS[opt.trFont] ? opt.trFont : fontName(null);
+    size.value = FONT_SIZES.includes(opt.trSize) ? String(opt.trSize) : '';
+    const upd=()=>{ prev.style.fontFamily=FONTS[fam.value]; prev.style.fontSize=(size.value||16)+'px'; };
+    fam.onchange=size.onchange=upd; upd();
     const where={node:'dentro una forma', edge:'su un connettore', free:'testo libero'};
     const inputs=clusters.map((c,i)=>{
       const row=document.createElement('div'); row.className='titem';
@@ -1779,9 +1807,10 @@ function transcribeDialog(clusters){
     setTimeout(()=>inputs[0] && inputs[0].focus(), 50);
     function done(ok){
       md.classList.remove('open');
-      opt.icons=$('#trIcons').checked; $('#cIcons').checked=opt.icons; saveOpt();
+      opt.icons=$('#trIcons').checked; $('#cIcons').checked=opt.icons;
+      opt.trFont=fam.value; opt.trSize=size.value?parseInt(size.value,10):0; saveOpt();
       $('#trOk').onclick=$('#trKeep').onclick=null;
-      resolve(ok ? inputs.map(i=>i.value) : null);
+      resolve(ok ? {texts:inputs.map(i=>i.value), ff:fam.value, fs:opt.trSize||0} : null);
     }
     $('#trOk').onclick=()=>done(true);
     $('#trKeep').onclick=()=>done(false);
@@ -1825,14 +1854,22 @@ function updateProps(){
   }
   const f=ns[0]||es[0]||ts[0]; const fsDef=f? (f.a?12:f.w!==undefined?14:16) : 14;
   $('#pFont').value=String(f&&f.fs||fsDef);
+  $('#pFamily').value=fontName(f);
   $('#pDash').checked=!!((ns[0]||es[0]||{}).dash);
 }
 function changeSel(fn){ fn(); commit(); }
+function fillFontSelect(box){
+  box.replaceChildren();
+  for (const name of Object.keys(FONTS)){ const o=document.createElement('option'); o.value=name; o.textContent=name==='Comic Sans MS'?'Comic Sans':name; o.style.fontFamily=FONTS[name]; box.append(o); }
+}
 function initProps(){
   const pt=$('#pType');
   [['Forme',SHAPES],['Rete',ICONS]].forEach(([lbl,list])=>{ const og=document.createElement('optgroup'); og.label=lbl;
     list.forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=TYPE_NAMES[t]; og.append(o); }); pt.append(og); });
-  const pf=$('#pFont'); [10,11,12,14,16,18,20,24,28,32,40].forEach(s=>{ const o=document.createElement('option'); o.value=String(s); o.textContent=s+' pt'; pf.append(o); });
+  const pf=$('#pFont'); FONT_SIZES.forEach(s=>{ const o=document.createElement('option'); o.value=String(s); o.textContent=s+' pt'; pf.append(o); });
+  for (const box of [$('#pFamily'), $('#selFont'), $('#trFamily')]) fillFontSelect(box);
+  FONT_SIZES.forEach(sz=>{ const o=document.createElement('option'); o.value=String(sz); o.textContent=sz+' pt'; $('#trSize').append(o); });
+  $('#pFamily').addEventListener('change', e=>changeSel(()=>[...selected('node'),...selected('edge'),...selected('text')].forEach(o=>{ if (e.target.value===S.font) delete o.ff; else o.ff=e.target.value; })));
   pt.addEventListener('change', ()=>changeSel(()=>selected('node').forEach(n=>{
     const nt=pt.value, c=center(n);
     if (isIcon(nt)!==isIcon(n.type)){ const [w,h]=DEF_SIZE[nt]; n.w=w; n.h=h; n.x=c[0]-w/2; n.y=c[1]-h/2; }
@@ -1923,7 +1960,7 @@ function validState(d){
   const okId=(v,p)=>{ let id=typeof v==='string' && /^[a-z]\d+$/.test(v) && !ids.has(v) ? v : p+(out.seq++); ids.add(id); return id; };
   for (const n of Array.isArray(d.nodes)?d.nodes:[]){
     if (![n.x,n.y,n.w,n.h].every(num) || ![...SHAPES,...ICONS].includes(n.type)) continue;
-    out.nodes.push({id:okId(n.id,'n'), type:n.type, x:n.x, y:n.y, w:Math.max(10,n.w), h:Math.max(10,n.h), text:str(n.text), fill:col(n.fill), stroke:col(n.stroke), sw:num(n.sw)?clamp(n.sw,0.5,10):undefined, fs:num(n.fs)?clamp(n.fs,6,96):undefined, dash:!!n.dash, dir:n.dir==='down'?'down':undefined});
+    out.nodes.push({id:okId(n.id,'n'), type:n.type, x:n.x, y:n.y, w:Math.max(10,n.w), h:Math.max(10,n.h), text:str(n.text), fill:col(n.fill), stroke:col(n.stroke), sw:num(n.sw)?clamp(n.sw,0.5,10):undefined, fs:num(n.fs)?clamp(n.fs,6,96):undefined, ff:FONTS[n.ff]?n.ff:undefined, dash:!!n.dash, dir:n.dir==='down'?'down':undefined});
   }
   const nid=new Set(out.nodes.map(n=>n.id));
   const ref=(r,side)=>{
@@ -1939,14 +1976,14 @@ function validState(d){
   for (const e of Array.isArray(d.edges)?d.edges:[]){
     const a=ref(e.a, e.sA), b=ref(e.b, e.sB); if (!a||!b) continue;
     const via=Array.isArray(e.via) ? e.via.filter(p=>Array.isArray(p)&&num(p[0])&&num(p[1])).map(p=>[p[0],p[1]]) : undefined;
-    out.edges.push({id:okId(e.id,'e'), a, b, style:['straight','orth','curve','poly'].includes(e.style)?e.style:'straight', arrowA:!!e.arrowA, arrowB:!!e.arrowB, text:str(e.text), color:col(e.color), width:num(e.width)?clamp(e.width,0.5,10):undefined, dash:!!e.dash, fs:num(e.fs)?clamp(e.fs,6,96):undefined, via,
+    out.edges.push({id:okId(e.id,'e'), a, b, style:['straight','orth','curve','poly'].includes(e.style)?e.style:'straight', arrowA:!!e.arrowA, arrowB:!!e.arrowB, text:str(e.text), color:col(e.color), width:num(e.width)?clamp(e.width,0.5,10):undefined, dash:!!e.dash, fs:num(e.fs)?clamp(e.fs,6,96):undefined, ff:FONTS[e.ff]?e.ff:undefined, via,
       um:num(e.um)?e.um:undefined, ua:e.ua==='x'?'x':num(e.um)?'y':undefined});
     const last=out.edges[out.edges.length-1];
     if (typeof e.sA==='string' && 'lr'.includes(e.sA) && num(e.um)) last.ua='x';
   }
   for (const t of Array.isArray(d.texts)?d.texts:[]){
     if (!num(t.x)||!num(t.y)) continue;
-    out.texts.push({id:okId(t.id,'t'), x:t.x, y:t.y, text:str(t.text), fs:num(t.fs)?clamp(t.fs,6,96):16, color:col(t.color)});
+    out.texts.push({id:okId(t.id,'t'), x:t.x, y:t.y, text:str(t.text), fs:num(t.fs)?clamp(t.fs,6,96):16, ff:FONTS[t.ff]?t.ff:undefined, color:col(t.color)});
   }
   for (const i of Array.isArray(d.inks)?d.inks:[]){
     if (!Array.isArray(i.pts)) continue;
@@ -1955,6 +1992,7 @@ function validState(d){
     out.inks.push({id:okId(i.id,'i'), pts, k:num(i.k)?clamp(i.k,0.05,10):1, t0:num(i.t0)?i.t0:0, t1:num(i.t1)?i.t1:0, keep:!!i.keep, hw:i.hw?true:undefined, c:col(i.c), w:num(i.w)?clamp(i.w,0.5,20):undefined});
   }
   out.theme = THEMES[d.theme] ? d.theme : 'visio';
+  out.font = FONTS[d.font] ? d.font : 'Calibri';
   let mx=0; ids.forEach(id=>{ mx=Math.max(mx, parseInt(id.slice(1),10)||0); });
   out.seq=Math.max(out.seq, mx+1);
   // rimuove le chiavi undefined
@@ -1962,7 +2000,7 @@ function validState(d){
 }
 function loadState(d, fit=true){
   S=validState(d); undoStack=[]; redoStack=[]; lastSnap=snapshot(); sel.clear();
-  $('#selTheme').value=S.theme; autosave();
+  $('#selTheme').value=S.theme; $('#selFont').value=fontName(null); autosave();
   if (fit) fitView(); else render();
 }
 $('#fileIn').addEventListener('change', e=>{
@@ -2031,14 +2069,14 @@ function exportDrawio(){
     const c=colorsOf(n); let st;
     if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;fillColor=${c.fill};strokeColor=#ffffff;strokeWidth=2;verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
     else st=DRAWIO_STYLE[n.type]+`fillColor=${c.fill};strokeColor=${c.stroke};`+(n.type==='triangle'&&n.dir==='down'?'direction=south;':'');
-    st+=`fontSize=${n.fs||14};fontFamily=Calibri;`+(n.dash?'dashed=1;':'')+(n.sw&&!isIcon(n.type)?`strokeWidth=${n.sw};`:'');
+    st+=`fontSize=${n.fs||14};fontFamily=${fontName(n)};`+(n.dash?'dashed=1;':'')+(n.sw&&!isIcon(n.type)?`strokeWidth=${n.sw};`:'');
     if (n.type==='triangle' && n.dir==='down') st=st.replace('direction=north;','');
     cells.push(`<mxCell id="${n.id}" value="${val(n.text)}" style="${xmlEsc(st)}" vertex="1" parent="1"><mxGeometry x="${r1(n.x)}" y="${r1(n.y)}" width="${r1(n.w)}" height="${r1(n.h)}" as="geometry"/></mxCell>`);
   }
   for (const e of S.edges){
     const col=e.color||th.edge;
     let st=(e.style==='orth'?'edgeStyle=orthogonalEdgeStyle;rounded=0;':e.style==='curve'?'edgeStyle=orthogonalEdgeStyle;curved=1;':e.style==='poly'?'curved=1;':'')+
-      `html=1;endArrow=${e.arrowB?'classic':'none'};startArrow=${e.arrowA?'classic':'none'};strokeColor=${col};strokeWidth=${e.width||1.6};fontSize=${e.fs||12};fontFamily=Calibri;`+(e.dash?'dashed=1;':'');
+      `html=1;endArrow=${e.arrowB?'classic':'none'};startArrow=${e.arrowA?'classic':'none'};strokeColor=${col};strokeWidth=${e.width||1.6};fontSize=${e.fs||12};fontFamily=${fontName(e)};`+(e.dash?'dashed=1;':'');
     for (const [end,pre] of [['a','exit'],['b','entry']]) if (e[end].n && e[end].p) st+=`${pre}X=${e[end].p[0]};${pre}Y=${e[end].p[1]};${pre}Dx=0;${pre}Dy=0;`;
     let attrs=`id="${e.id}" value="${val(e.text)}" style="${xmlEsc(st)}" edge="1" parent="1"`;
     if (e.a.n) attrs+=` source="${e.a.n}"`; if (e.b.n) attrs+=` target="${e.b.n}"`;
@@ -2050,8 +2088,8 @@ function exportDrawio(){
     cells.push(`<mxCell ${attrs}>${geo}</mxCell>`);
   }
   for (const t of S.texts){
-    const fs=t.fs||16, lines=String(t.text).split('\n'), w=Math.max(...lines.map(l=>textW(l,fs)))+16, h=lines.length*fs*1.3+8;
-    cells.push(`<mxCell id="${t.id}" value="${val(t.text)}" style="text;html=1;align=center;verticalAlign=middle;fontSize=${fs};fontFamily=Calibri;" vertex="1" parent="1"><mxGeometry x="${r1(t.x-w/2)}" y="${r1(t.y-h/2)}" width="${r1(w)}" height="${r1(h)}" as="geometry"/></mxCell>`);
+    const fs=t.fs||16, lines=String(t.text).split('\n'), w=Math.max(...lines.map(l=>textW(l,fs,ffOf(t))))+16, h=lines.length*fs*1.3+8;
+    cells.push(`<mxCell id="${t.id}" value="${val(t.text)}" style="text;html=1;align=center;verticalAlign=middle;fontSize=${fs};fontFamily=${fontName(t)};${t.color?`fontColor=${t.color};`:''}" vertex="1" parent="1"><mxGeometry x="${r1(t.x-w/2)}" y="${r1(t.y-h/2)}" width="${r1(w)}" height="${r1(h)}" as="geometry"/></mxCell>`);
   }
   const xml=`<?xml version="1.0" encoding="UTF-8"?>\n<mxfile host="VisiDraw" version="${APP_VERSION}"><diagram id="visidraw" name="Pagina-1"><mxGraphModel grid="1" gridSize="10" guides="1" connect="1" arrows="1" page="1" pageScale="1" math="0" shadow="0"><root>${cells.join('')}</root></mxGraphModel></diagram></mxfile>`;
   download('diagramma.drawio', xml, 'application/xml');
@@ -2203,6 +2241,7 @@ $('#mFile').addEventListener('click', e=>{
 $('#mEx').addEventListener('click', e=>{ const k=e.target.dataset.ex; if (k){ closeMenus(); loadExample(k); } });
 $('#mView').addEventListener('click', e=>{ if (e.target.dataset.act==='selftest'){ closeMenus(); runSelfTest(); } });
 $('#selTheme').addEventListener('change', e=>{ S.theme=e.target.value; buildPalette(); commit(); });
+$('#selFont').addEventListener('change', e=>{ S.font=e.target.value; commit(); });
 $('#cGrid').addEventListener('change', e=>{ opt.grid=e.target.checked; saveOpt(); render(); });
 $('#cSnap').addEventListener('change', e=>{ opt.snap=e.target.checked; saveOpt(); });
 $('#cIcons').addEventListener('change', e=>{ opt.icons=e.target.checked; saveOpt(); });
@@ -2345,7 +2384,7 @@ function runSelfTest(){
   let restored=false;
   try{ const s=localStorage.getItem('visidraw.autosave'); if (s){ S=validState(JSON.parse(s)); restored=true; } }catch(e){ S=newState(); }
   lastSnap=snapshot();
-  $('#selTheme').value=S.theme;
+  $('#selTheme').value=S.theme; $('#selFont').value=fontName(null);
   buildPalette();
   setTool('pen');
   const r=board.getBoundingClientRect(); view={x:r.width*0.1, y:r.height*0.1, k:1};
