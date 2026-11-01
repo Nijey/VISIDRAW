@@ -322,7 +322,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.12.1';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -1628,15 +1628,37 @@ function arrowGlyph(g, a, b, s, col){
   el('line', {x1:r1(a[0]), y1:r1(a[1]), x2:r1(base[0]), y2:r1(base[1]), stroke:col, 'stroke-width':r1(s*0.6), 'stroke-linecap':'round'}, g);
   el('path', {d:`M${r1(b[0])} ${r1(b[1])}L${r1(base[0]-dy*s)} ${r1(base[1]+dx*s)}L${r1(base[0]+dy*s)} ${r1(base[1]-dx*s)}Z`, fill:col}, g);
 }
+// colore chiaro? (luminanza relativa sRGB): serve per il contrasto delle icone
+function isLightColor(hex){
+  const m=/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex||''); if (!m) return false;
+  const v=m[1].length===3 ? m[1].split('').map(ch=>parseInt(ch+ch,16)) : [0,2,4].map(i=>parseInt(m[1].slice(i,i+2),16));
+  const [r,g,b]=v.map(c=>{ c/=255; return c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); });
+  return 0.2126*r + 0.7152*g + 0.0722*b > 0.45;
+}
+// Bordo di un'icona: copia del disegno sotto l'originale, tutta nel colore del bordo e con il tratto allargato.
+// Resta visibile solo la parte che sporge dalla sagoma (funziona anche nelle esportazioni SVG/PNG).
+function iconOutline(ig, col, w, dash){
+  const u=ig.cloneNode(true);
+  for (const e of u.querySelectorAll('*')){
+    if (e.tagName==='g') continue;
+    const st=e.getAttribute('stroke'), hasStroke=!!st && st!=='none', sw=hasStroke ? parseFloat(e.getAttribute('stroke-width'))||1 : 0;
+    if (e.getAttribute('fill')!=='none') e.setAttribute('fill', col);
+    e.setAttribute('stroke', col); e.setAttribute('stroke-width', r1(sw+2*w)); e.setAttribute('stroke-linejoin', 'round');
+    e.removeAttribute('fill-opacity'); e.removeAttribute('stroke-opacity');
+    if (dash) e.setAttribute('stroke-dasharray', '6 3');
+  }
+  ig.parentNode.insertBefore(u, ig);
+}
 function drawIcon(g, n, c){
-  const {x,y,w,h}=n, cx=x+w/2, cy=y+h/2, W='#ffffff', LIGHT='#e8f1fb';
+  // su riempimenti chiari i dettagli diventano scuri, altrimenti sparirebbero
+  const lt=isLightColor(c), {x,y,w,h}=n, cx=x+w/2, cy=y+h/2, W=lt?'#334155':'#ffffff', LIGHT=lt?'#cbd5e1':'#e8f1fb';
   const R=(xx,yy,ww,hh,rx,f,s)=>el('rect',{x:r1(xx),y:r1(yy),width:r1(ww),height:r1(hh),rx:rx,fill:f,stroke:s,'stroke-width':s?1.5:''},g);
   // robottino Android stilizzato: testa (semicerchio sopra hy) con antenne e occhi, corpo sotto
   const droid=(ox,hy,hr)=>{ const G='#22c55e';
     el('path',{d:`M${r1(ox-hr)} ${r1(hy)}A${r1(hr)} ${r1(hr)} 0 0 1 ${r1(ox+hr)} ${r1(hy)}Z`, fill:G},g);
     for (const d of [-1,1]){
       el('line',{x1:r1(ox+d*hr*0.5), y1:r1(hy-hr*0.8), x2:r1(ox+d*hr*0.8), y2:r1(hy-hr*1.25), stroke:G, 'stroke-width':1.4, 'stroke-linecap':'round'},g);
-      el('circle',{cx:r1(ox+d*hr*0.42), cy:r1(hy-hr*0.45), r:r1(hr*0.11), fill:W},g);
+      el('circle',{cx:r1(ox+d*hr*0.42), cy:r1(hy-hr*0.45), r:r1(hr*0.11), fill:'#ffffff'},g);
     }
     R(ox-hr,hy+hr*0.15,hr*2,hr*0.95,2,G); };
   switch(n.type){
@@ -1786,11 +1808,12 @@ function drawIcon(g, n, c){
       R(x,y,sw2,h,5,c);
       for (let i=0;i<3;i++){ const yy=y+h*(0.12+0.27*i); R(x+sw2*0.14, yy, sw2*0.72, h*0.17, 2, W);
         el('circle',{cx:r1(x+sw2*0.74), cy:r1(yy+h*0.085), r:r1(Math.min(sw2,h)*0.035), fill:'#22c55e'},g); }
-      const px=x+w*0.74, py=y+h*0.7, pr=Math.min(w*0.24, h*0.2), K='#1f2937', Y='#f59e0b';
-      el('ellipse',{cx:r1(px), cy:r1(py), rx:r1(pr*0.95), ry:r1(pr*1.3), fill:K, stroke:W, 'stroke-width':1.2},g);
-      el('ellipse',{cx:r1(px), cy:r1(py+pr*0.35), rx:r1(pr*0.6), ry:r1(pr*0.8), fill:W},g);
+      // il pinguino ha colori propri (non cambiano col riempimento)
+      const px=x+w*0.74, py=y+h*0.7, pr=Math.min(w*0.24, h*0.2), K='#1f2937', Y='#f59e0b', PW='#ffffff';
+      el('ellipse',{cx:r1(px), cy:r1(py), rx:r1(pr*0.95), ry:r1(pr*1.3), fill:K, stroke:PW, 'stroke-width':1.2},g);
+      el('ellipse',{cx:r1(px), cy:r1(py+pr*0.35), rx:r1(pr*0.6), ry:r1(pr*0.8), fill:PW},g);
       for (const d of [-1,1]){
-        el('circle',{cx:r1(px+d*pr*0.3), cy:r1(py-pr*0.75), r:r1(pr*0.2), fill:W},g);
+        el('circle',{cx:r1(px+d*pr*0.3), cy:r1(py-pr*0.75), r:r1(pr*0.2), fill:PW},g);
         el('circle',{cx:r1(px+d*pr*0.25), cy:r1(py-pr*0.72), r:r1(pr*0.09), fill:K},g);
         el('ellipse',{cx:r1(px+d*pr*0.45), cy:r1(py+pr*1.25), rx:r1(pr*0.4), ry:r1(pr*0.16), fill:Y},g);
       }
@@ -1842,7 +1865,10 @@ function drawNode(n, parent){
   const g=el('g', {'data-id':n.id}, parent), c=colorsOf(n), fs=n.fs||14, ff=ffOf(n);
   if (isIcon(n.type)){
     el('rect', {x:n.x, y:n.y, width:n.w, height:n.h, fill:'transparent'}, g);
-    drawIcon(g, n, c.fill);
+    const ig=el('g', {}, g), lt=isLightColor(c.fill);
+    drawIcon(ig, n, c.fill);
+    // bordo scelto dall'utente (colore, spessore, tratteggio); sulle icone chiare un contorno automatico le rende visibili
+    if (n.stroke || n.sw || n.dash || lt) iconOutline(ig, n.stroke || (lt ? '#475569' : c.stroke), n.sw || (lt ? 1.2 : 1.5), n.dash);
     if (n.text){
       const lines=wrapText(n.text, Math.max(n.w*2, 130), fs, ff), cy=n.y+n.h+6+lines.length*fs*0.6;
       const tw=Math.max(...lines.map(l=>textW(l,fs,ff)))+8, th2=lines.length*fs*1.2+2;
@@ -2757,8 +2783,9 @@ function exportDrawio(){
   for (const n of S.nodes){
     const c=colorsOf(n); let st;
     // icone senza simbolo in draw.io: riquadro arrotondato con l'etichetta sotto
-    if (isIcon(n.type) && !DRAWIO_STYLE[n.type]) st=`rounded=1;html=1;fillColor=${c.fill};strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;`;
-    else if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;`+(n.type==='datacenter'?'fillColor=#fafafa;strokeColor=#005073;':`fillColor=${c.fill};strokeColor=#ffffff;strokeWidth=2;`)+`verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
+    const lt=isIcon(n.type) && isLightColor(c.fill);
+    if (isIcon(n.type) && !DRAWIO_STYLE[n.type]) st=`rounded=1;html=1;fillColor=${c.fill};strokeColor=${n.stroke||(lt?'#475569':'#ffffff')};`+(n.sw?`strokeWidth=${n.sw};`:'')+`verticalLabelPosition=bottom;verticalAlign=top;align=center;`;
+    else if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;`+(n.type==='datacenter'?'fillColor=#fafafa;strokeColor=#005073;':`fillColor=${c.fill};strokeColor=${lt?(n.stroke||'#475569'):'#ffffff'};strokeWidth=2;`)+`verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
     else st=DRAWIO_STYLE[n.type]+`fillColor=${c.fill};strokeColor=${c.stroke};`+(n.type==='triangle'&&n.dir==='down'?'direction=south;':'');
     st+=`fontSize=${n.fs||14};fontFamily=${fontName(n)};`+(n.dash?'dashed=1;':'')+(n.sw&&!isIcon(n.type)?`strokeWidth=${n.sw};`:'');
     if (n.type==='triangle' && n.dir==='down') st=st.replace('direction=north;','');
@@ -3098,6 +3125,13 @@ function runSelfTest(){
     const bad=kw.filter(([t, type])=>{ const n={type:'rect', x:0, y:0, w:120, h:60, text:t}; applyIconKeyword(n); return n.type!==type; }).map(k=>k[0]);
     opt.icons=savedIcons;
     geo.push([`parole chiave → icone${bad.length?': '+bad.join(', '):''}`, !bad.length]);
+  }
+  { // bordo delle icone (colore e spessore scelti) e contorno automatico sulle icone chiare
+    const draw1=o=>{ const tmp=el('g',{}), n=Object.assign({id:'zt0', x:0, y:0, w:60, h:60}, o); drawNode(n, tmp); elMap.delete('zt0'); return [...tmp.querySelectorAll('*')]; };
+    const a=draw1({type:'router', stroke:'#b85450', sw:4}).filter(e=>e.getAttribute('stroke')==='#b85450');
+    geo.push(['bordo delle icone: colore e spessore', a.length>0 && a.some(e=>parseFloat(e.getAttribute('stroke-width'))>=8)]);
+    const b=draw1({type:'server', fill:'#ffffff'});
+    geo.push(['icona chiara: contorno e dettagli scuri', b.some(e=>e.getAttribute('stroke')==='#475569') && b.some(e=>e.getAttribute('fill')==='#334155')]);
   }
   lines.push('');
   for (const [name, pass] of geo){ tot++; if (pass) ok++; lines.push(`${pass?'✔':'✘'} ${name}`); }

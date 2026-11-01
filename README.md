@@ -46,6 +46,8 @@ mai diagonali): da uno spigolo escono in orizzontale o in verticale.
 Altro: tavolozza di forme e icone di rete (router, switch, Catalyst/switch L3, firewall, server, datacenter, PC, portatile, AP, modem, stampante, telefono).
 Sezioni espandibili: *Dispositivi e videosorveglianza* (iPhone, Android, iPad, tablet Android, server Linux, NAS a 2 e 4 dischi, telecamera, DVR/NVR) e
 *Casa e intrattenimento* (Fire TV, console, luce Hue, colonnina di ricarica EV, Echo, soundbar).
+Anche le icone hanno bordo (colore, spessore, tratteggio); con un riempimento chiaro i dettagli diventano scuri e compare
+un contorno grigio, così restano visibili sul foglio bianco.
 Scrivendo *router, switch, catalyst, firewall, server, datacenter, modem, pc, AP, internet, database*… la forma diventa l'icona corrispondente.
 Vale anche per *iPhone / smartphone, Android, iPad / tablet, tablet Android / Galaxy Tab, Linux / Ubuntu / server Linux, NAS (4 dischi) / NAS 2 (2 dischi), telecamera / TVCC / CCTV, DVR / NVR,
 TV / Fire TV, console / PS5 / Xbox, luce / Hue, EV / colonnina / wallbox, Echo / Alexa, soundbar*.
