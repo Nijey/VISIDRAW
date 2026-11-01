@@ -8,6 +8,9 @@ Un solo file, `visidraw.html`: si apre con un doppio clic, funziona **offline** 
 
 ## Come si usa
 1. **Penna** (`P`): disegna rettangoli, ovali/cerchi, rombi, triangoli, parallelogrammi, nuvole; poi linee e frecce fra le forme.
+   Nella barra scegli lo **spessore** (sottile, medio, grosso) e il **colore** (nero, blu, rosso, verde, viola).
+   Il nero medio dà i colori del tema; con altri colori o spessori forme (bordo), connettori e testi
+   mantengono colore e spessore del tratto. Valgono anche per la scrittura a mano.
 2. **Scrittura a mano** (`W`, oppure un altro clic sulla penna già attiva): scrivi le etichette dentro le forme o vicino
    alle frecce. In questa modalità i tratti (viola) diventano **sempre testo**, mai forme: anche una "O" grande resta una lettera.
    Sul tablet si scrive anche tenendo premuto il tasto laterale della penna; il retro della penna cancella.

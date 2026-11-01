@@ -57,6 +57,14 @@ button,select,input,textarea{font:inherit;color:inherit}
 #board.t-hand,#board.panning{cursor:grab}
 #board.t-write{cursor:crosshair}
 .btn .lbl{font-size:12.5px}
+#penOpts{gap:3px;padding:2px 5px}
+#penOpts button{width:26px;height:26px;border-radius:7px;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+#penOpts button:hover{background:#e8edf4}
+#penOpts .pw i{display:block;border-radius:50%;background:var(--pen,#111827)}
+#penOpts .pw.on{background:#dbeafe;box-shadow:inset 0 0 0 1.5px var(--accent)}
+#penOpts .pc i{display:block;width:16px;height:16px;border-radius:50%}
+#penOpts .pc.on i{box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--accent)}
+#penOpts .sep{width:1px;height:20px;background:var(--line);margin:0 2px}
 .btn.on.write{background:#7c3aed}
 #modeBadge{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:3;padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:600;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none}
 #modeBadge.pen{display:block;background:#dbeafe;color:#1e40af}
@@ -103,6 +111,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
 #testOut{position:fixed;inset:20px;background:#fff;border:2px solid #334155;border-radius:12px;padding:16px;overflow:auto;z-index:80;font:13px/1.4 Consolas,monospace;display:none;white-space:pre-wrap}
 #testOut.open{display:block}
 #footer{position:absolute;left:10px;bottom:6px;font-size:11px;color:#94a3b8;pointer-events:none;z-index:3}
+@media (max-width:1480px){ .lbl2{display:none} }
 @media (max-width:760px){
   #palette{position:absolute;top:0;bottom:0;left:0;z-index:8;box-shadow:4px 0 20px rgba(0,0,0,.15);display:none}
   #palette.open{display:block}
@@ -135,6 +144,17 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
       <button class="btn" data-tool="eraser" title="Gomma (E)"><svg viewBox="0 0 24 24"><path d="M8 20h12"/><path d="M4 15l9-9 6 6-7 7H8z"/><path d="M9 10l6 6"/></svg></button>
       <button class="btn" data-tool="text" title="Testo da tastiera (T)"><svg viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></button>
       <button class="btn" data-tool="hand" title="Sposta la vista (H, oppure spazio + trascina)"><svg viewBox="0 0 24 24"><path d="M8 12V6a1.5 1.5 0 013 0v5M11 11V4.5a1.5 1.5 0 013 0V11M14 11V6a1.5 1.5 0 013 0v7c0 4-2.5 7-6 7-2.5 0-4-1-5.5-3L3 13.5a1.5 1.5 0 012.3-1.9L8 14"/></svg></button>
+    </div>
+    <div class="grp" id="penOpts" title="Spessore e colore della penna">
+      <button class="pw" data-pw="1.5" title="Penna sottile"><i style="width:4px;height:4px"></i></button>
+      <button class="pw" data-pw="3" title="Penna media"><i style="width:8px;height:8px"></i></button>
+      <button class="pw" data-pw="5.5" title="Penna grossa"><i style="width:13px;height:13px"></i></button>
+      <span class="sep"></span>
+      <button class="pc" data-pc="#111827" title="Nero (dopo Elabora usa i colori del tema)"><i style="background:#111827"></i></button>
+      <button class="pc" data-pc="#1d4ed8" title="Blu"><i style="background:#1d4ed8"></i></button>
+      <button class="pc" data-pc="#dc2626" title="Rosso"><i style="background:#dc2626"></i></button>
+      <button class="pc" data-pc="#16a34a" title="Verde"><i style="background:#16a34a"></i></button>
+      <button class="pc" data-pc="#7c3aed" title="Viola"><i style="background:#7c3aed"></i></button>
     </div>
     <div class="grp">
       <button class="btn primary" id="bElab" title="Trasforma lo schizzo in diagramma (Invio)">✨ Elabora</button>
@@ -184,7 +204,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
       </div>
     </div>
     <div class="spacer"></div>
-    <button class="btn" id="bHelp" title="Guida rapida">❔ Guida</button>
+    <button class="btn" id="bHelp" title="Guida rapida">❔<span class="lbl2"> Guida</span></button>
   </header>
 
   <div id="work">
@@ -215,6 +235,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
           <div class="row"><span>Tipo</span><select id="pType"></select></div>
           <div class="row"><span>Riempimento</span><div class="sw" id="pFill"></div></div>
           <div class="row"><span>Bordo</span><div class="sw" id="pStroke"></div></div>
+          <div class="row"><span>Spessore bordo</span><select id="pSw"><option value="1">Sottile</option><option value="1.5">Normale</option><option value="2.5">Spesso</option><option value="4">Molto spesso</option></select></div>
         </div>
         <div class="sec" id="pEdge">
           <h5>Connettore</h5>
@@ -242,7 +263,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
     <p>Disegna a mano libera uno schema di rete, un workflow o un diagramma di flusso. VisiDraw lo ridisegna pulito, con forme, connettori, frecce e testi, come in un programma professionale.</p>
     <div class="steps">
       <div class="step"><b><span class="n">1</span>Disegna con la penna <kbd>P</kbd></b>
-        Rettangoli, ovali, rombi, triangoli, parallelogrammi, nuvole; poi linee e frecce tra le forme. Va bene anche con il dito o con la penna del tablet.
+        Rettangoli, ovali, rombi, triangoli, parallelogrammi, nuvole; poi linee e frecce tra le forme. Va bene anche con il dito o con la penna del tablet. Scegli spessore (sottile, medio, grosso) e colore: il nero usa i colori del tema, gli altri colori restano nel diagramma.
         <svg viewBox="0 0 240 70"><path d="M12 14 C40 10 70 12 92 13 C94 30 93 45 94 58 C70 60 40 59 13 60 C11 45 12 30 14 12" fill="none" stroke="#1e3a8a" stroke-width="2"/><path d="M98 36 C120 38 140 35 160 37 M150 30 L161 37 L150 44" fill="none" stroke="#1e3a8a" stroke-width="2"/><path d="M200 8 L232 36 L200 64 L168 36 Z" fill="none" stroke="#1e3a8a" stroke-width="2" stroke-linejoin="round"/></svg></div>
       <div class="step"><b><span class="n">2</span>Scrivi con ✍ Scrittura <kbd>W</kbd></b>
         Passa alla modalità <b>Scrittura a mano</b> (o clicca di nuovo sulla penna) e scrivi dentro le forme o accanto alle frecce: quei tratti diventano sempre testo, mai forme. In alternativa usa il testo da tastiera <kbd>T</kbd>. Scrivendo <i>router, switch, firewall, server, pc, AP, internet</i>… ottieni l'icona di rete.
@@ -291,7 +312,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -305,7 +326,19 @@ let tool = 'pen';
 let sel = new Set();
 let undoStack = [], redoStack = [];
 let lastSnap = '';
-let opt = {grid:true, snap:true, icons:true, auto:false};
+let opt = {grid:true, snap:true, icons:true, auto:false, penColor:'#111827', penWidth:3};
+// Penna: 5 colori e 3 spessori (px sullo schermo). Nero medio = stile predefinito: dopo Elabora valgono i colori del tema;
+// gli altri colori/spessori passano a forme (bordo), connettori e testi.
+const PEN_COLORS=['#111827','#1d4ed8','#dc2626','#16a34a','#7c3aed'];
+const PEN_WIDTHS=[{px:1.5, edge:1, node:1}, {px:3, edge:1.6, node:1.5}, {px:5.5, edge:2.5, node:2.5}];
+const DEF_INK_COLOR='#111827', DEF_INK_WIDTH=3;
+function inkStyle(ink){
+  const st={};
+  if (ink.c && ink.c!==DEF_INK_COLOR) st.color=ink.c;
+  const pw=PEN_WIDTHS.find(p=>p.px===ink.w);
+  if (pw && pw.px!==DEF_INK_WIDTH) st.width=pw;
+  return st;
+}
 const elMap = new Map();          // id → elemento SVG disegnato
 
 function uid(p){ return p + (S.seq++); }
@@ -592,6 +625,9 @@ function makeNodeFromClosed(it){
   if (type==='ellipse' && Math.abs(w-h) < 0.15*Math.max(w,h)) w=h=(w+h)/2;
   const n={id:uid('n'), type, x:b.cx-w/2, y:b.cy-h/2, w, h, text:''};
   if (type==='triangle' && c.dir==='down') n.dir='down';
+  const st=inkStyle(it.ink);
+  if (st.color) n.stroke=st.color;
+  if (st.width) n.sw=st.width.node;
   return n;
 }
 function attachAt(p, nodes, k){
@@ -727,6 +763,9 @@ function recognize(inks, existingNodes, existingEdges){
     // agganciato ad almeno una forma: niente diagonali, connettore ortogonale
     if (style==='straight' && (A || B)) style='orth';
     const e={id:uid('e'), a:A?endRefFor(A, o.a, it.k):{x:o.a[0], y:o.a[1]}, b:B?endRefFor(B, o.b, it.k):{x:o.b[0], y:o.b[1]}, style, arrowA, arrowB, text:''};
+    const est=inkStyle(it.ink);
+    if (est.color) e.color=est.color;
+    if (est.width) e.width=est.width.edge;
     if (style==='poly') e.via=o.verts.slice(1,-1).map(p=>[r1(p[0]),r1(p[1])]);
     if (o.style==='orth' && A && B && o.verts.length>2){
       // gomito disegnato: lato da cui il tratto esce dalla prima forma e lato da cui entra nella seconda
@@ -1151,9 +1190,9 @@ function drawNode(n, parent){
       drawLines(lg, lines, n.x+n.w/2, cy, fs, c.text);
     }
   } else {
-    el('path', {d:shapePath(n), fill:c.fill, stroke:c.stroke, 'stroke-width':1.5, 'stroke-dasharray':n.dash?'7 4':'', 'stroke-linejoin':'round'}, g);
+    el('path', {d:shapePath(n), fill:c.fill, stroke:c.stroke, 'stroke-width':n.sw||1.5, 'stroke-dasharray':n.dash?'7 4':'', 'stroke-linejoin':'round'}, g);
     if (n.type==='cylinder'){ const ry=Math.min(n.h*0.15,14);
-      el('path', {d:`M${n.x} ${n.y+ry}A${n.w/2} ${ry} 0 0 0 ${n.x+n.w} ${n.y+ry}`, fill:'none', stroke:c.stroke, 'stroke-width':1.5}, g); }
+      el('path', {d:`M${n.x} ${n.y+ry}A${n.w/2} ${ry} 0 0 0 ${n.x+n.w} ${n.y+ry}`, fill:'none', stroke:c.stroke, 'stroke-width':n.sw||1.5}, g); }
     if (n.text){ const b=labelBox(n); drawLines(g, wrapText(n.text, Math.max(b.w, 20), fs), b.cx, b.cy, fs, c.text); }
   }
   elMap.set(n.id, g);
@@ -1197,7 +1236,9 @@ function inkPath(p){
 function drawInk(ink, parent){
   const g=el('g', {'data-id':ink.id}, parent), d=inkPath(ink.pts);
   el('path', {d, fill:'none', stroke:'transparent', 'stroke-width':12, class:'hit', 'stroke-linecap':'round'}, g);
-  el('path', {d, fill:'none', stroke:ink.keep?(THEMES[S.theme]||THEMES.visio).text:(ink.hw?'#7c3aed':'#1e40af'), 'stroke-width':ink.keep?1.8:2.4/(ink.k||1),
+  // tratti conservati a mano: colore del tema se neri, altrimenti il loro colore
+  const col = ink.keep && (!ink.c || ink.c===DEF_INK_COLOR) ? (THEMES[S.theme]||THEMES.visio).text : (ink.c||DEF_INK_COLOR);
+  el('path', {d, fill:'none', stroke:col, 'stroke-width':r1((ink.w||2.4)/(ink.k||1)*10)/10,
     'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:ink.keep?1:0.9}, g);
   elMap.set(ink.id, g);
 }
@@ -1367,12 +1408,12 @@ function zoomAt(sx, sy, f){
 }
 // --- penna ---
 function startInk(e, w, hw){
-  const path=el('path', {d:'', fill:'none', stroke:hw?'#7c3aed':'#1e40af', 'stroke-width':2.4/view.k, 'stroke-linecap':'round', 'stroke-linejoin':'round'}, L.sel);
+  const path=el('path', {d:'', fill:'none', stroke:opt.penColor, 'stroke-width':opt.penWidth/view.k, 'stroke-linecap':'round', 'stroke-linejoin':'round'}, L.sel);
   gesture={type:'ink', pts:[[r1(w[0]),r1(w[1])]], path, t0:Date.now(), hw:!!hw};
 }
 function finishInk(g){
   g.path.remove();
-  const ink={id:uid('i'), pts:g.pts, k:view.k, t0:g.t0, t1:Date.now()};
+  const ink={id:uid('i'), pts:g.pts, k:view.k, t0:g.t0, t1:Date.now(), c:opt.penColor, w:opt.penWidth};
   if (g.hw) ink.hw=true;
   if (g.pts.length<2 || pathLen(g.pts)*view.k<3){
     // un tocco: in scrittura è un puntino (i, punteggiatura), in forme si ignora come prima
@@ -1690,7 +1731,9 @@ function applyClusters(clusters, texts){
       const e=S.edges.find(x=>x.id===c.target.id);
       if (e){ e.text = e.text ? e.text+' '+txt : txt; return; }
     }
-    S.texts.push({id:uid('t'), x:snapV(c.b.cx), y:snapV(c.b.cy), text:txt, fs:clamp(Math.round(c.b.h*0.6), 12, 28)});
+    const t={id:uid('t'), x:snapV(c.b.cx), y:snapV(c.b.cy), text:txt, fs:clamp(Math.round(c.b.h*0.6), 12, 28)};
+    const st=inkStyle(c.items[0].ink); if (st.color) t.color=st.color;
+    S.texts.push(t);
   });
 }
 // Finestra di trascrizione (usa il riconoscimento della scrittura del browser, se c'è)
@@ -1774,7 +1817,7 @@ function updateProps(){
   if (!show) return;
   $('#pNode').style.display = ns.length ? '' : 'none';
   $('#pEdge').style.display = es.length ? '' : 'none';
-  if (ns.length) $('#pType').value=ns[0].type;
+  if (ns.length){ $('#pType').value=ns[0].type; $('#pSw').value=String(ns[0].sw||1.5); }
   if (es.length){
     const e=es[0]; $('#pStyle').value=e.style||'straight';
     $('#pArrows').value = e.arrowA&&e.arrowB?'both':e.arrowB?'end':e.arrowA?'start':'none';
@@ -1800,6 +1843,7 @@ function initProps(){
   $('#pStyle').addEventListener('change', e=>changeSel(()=>selected('edge').forEach(x=>{ x.style=e.target.value; delete x.um; delete x.ua; if (x.style==='poly' && !(x.via&&x.via.length)) x.style='straight'; })));
   $('#pArrows').addEventListener('change', e=>changeSel(()=>selected('edge').forEach(x=>{ const v=e.target.value; x.arrowA=v==='start'||v==='both'; x.arrowB=v==='end'||v==='both'; })));
   $('#pAuto').addEventListener('click', ()=>changeSel(()=>selected('edge').forEach(x=>{ for (const end of ['a','b']) if (x[end].n) x[end]={n:x[end].n}; delete x.um; delete x.ua; })));
+  $('#pSw').addEventListener('change', e=>changeSel(()=>selected('node').forEach(n=>{ const v=parseFloat(e.target.value); if (v===1.5) delete n.sw; else n.sw=v; })));
   $('#pWidth').addEventListener('change', e=>changeSel(()=>selected('edge').forEach(x=>{ x.width=parseFloat(e.target.value); })));
   pf.addEventListener('change', ()=>changeSel(()=>[...selected('node'),...selected('edge'),...selected('text')].forEach(o=>{ o.fs=parseInt(pf.value,10); })));
   $('#pDash').addEventListener('change', e=>changeSel(()=>[...selected('node'),...selected('edge')].forEach(o=>{ o.dash=e.target.checked; })));
@@ -1879,7 +1923,7 @@ function validState(d){
   const okId=(v,p)=>{ let id=typeof v==='string' && /^[a-z]\d+$/.test(v) && !ids.has(v) ? v : p+(out.seq++); ids.add(id); return id; };
   for (const n of Array.isArray(d.nodes)?d.nodes:[]){
     if (![n.x,n.y,n.w,n.h].every(num) || ![...SHAPES,...ICONS].includes(n.type)) continue;
-    out.nodes.push({id:okId(n.id,'n'), type:n.type, x:n.x, y:n.y, w:Math.max(10,n.w), h:Math.max(10,n.h), text:str(n.text), fill:col(n.fill), stroke:col(n.stroke), fs:num(n.fs)?clamp(n.fs,6,96):undefined, dash:!!n.dash, dir:n.dir==='down'?'down':undefined});
+    out.nodes.push({id:okId(n.id,'n'), type:n.type, x:n.x, y:n.y, w:Math.max(10,n.w), h:Math.max(10,n.h), text:str(n.text), fill:col(n.fill), stroke:col(n.stroke), sw:num(n.sw)?clamp(n.sw,0.5,10):undefined, fs:num(n.fs)?clamp(n.fs,6,96):undefined, dash:!!n.dash, dir:n.dir==='down'?'down':undefined});
   }
   const nid=new Set(out.nodes.map(n=>n.id));
   const ref=(r,side)=>{
@@ -1908,7 +1952,7 @@ function validState(d){
     if (!Array.isArray(i.pts)) continue;
     const pts=i.pts.filter(p=>Array.isArray(p)&&num(p[0])&&num(p[1])).slice(0,20000).map(p=>[p[0],p[1]]);
     if (pts.length<2) continue;
-    out.inks.push({id:okId(i.id,'i'), pts, k:num(i.k)?clamp(i.k,0.05,10):1, t0:num(i.t0)?i.t0:0, t1:num(i.t1)?i.t1:0, keep:!!i.keep, hw:i.hw?true:undefined});
+    out.inks.push({id:okId(i.id,'i'), pts, k:num(i.k)?clamp(i.k,0.05,10):1, t0:num(i.t0)?i.t0:0, t1:num(i.t1)?i.t1:0, keep:!!i.keep, hw:i.hw?true:undefined, c:col(i.c), w:num(i.w)?clamp(i.w,0.5,20):undefined});
   }
   out.theme = THEMES[d.theme] ? d.theme : 'visio';
   let mx=0; ids.forEach(id=>{ mx=Math.max(mx, parseInt(id.slice(1),10)||0); });
@@ -1987,7 +2031,7 @@ function exportDrawio(){
     const c=colorsOf(n); let st;
     if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;fillColor=${c.fill};strokeColor=#ffffff;strokeWidth=2;verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
     else st=DRAWIO_STYLE[n.type]+`fillColor=${c.fill};strokeColor=${c.stroke};`+(n.type==='triangle'&&n.dir==='down'?'direction=south;':'');
-    st+=`fontSize=${n.fs||14};fontFamily=Calibri;`+(n.dash?'dashed=1;':'');
+    st+=`fontSize=${n.fs||14};fontFamily=Calibri;`+(n.dash?'dashed=1;':'')+(n.sw&&!isIcon(n.type)?`strokeWidth=${n.sw};`:'');
     if (n.type==='triangle' && n.dir==='down') st=st.replace('direction=north;','');
     cells.push(`<mxCell id="${n.id}" value="${val(n.text)}" style="${xmlEsc(st)}" vertex="1" parent="1"><mxGeometry x="${r1(n.x)}" y="${r1(n.y)}" width="${r1(n.w)}" height="${r1(n.h)}" as="geometry"/></mxCell>`);
   }
@@ -2077,6 +2121,8 @@ function inksFrom(strokes){
     const t0=t; t += pts.hw ? 400 : 900;
     const ink={id:uid('i'), pts:pts.slice(), k:1, t0, t1:t0+(pts.hw?250:600)};
     if (pts.hw) ink.hw=true;
+    if (pts.c) ink.c=pts.c;
+    if (pts.w) ink.w=pts.w;
     return ink;
   });
 }
@@ -2168,6 +2214,18 @@ document.querySelectorAll('#tools .btn').forEach(b=>b.addEventListener('click', 
   else setTool(t);
 }));
 $('#bElab').addEventListener('click', ()=>elaborate(false));
+function updatePenUI(){
+  document.querySelectorAll('#penOpts .pw').forEach(b=>b.classList.toggle('on', parseFloat(b.dataset.pw)===opt.penWidth));
+  document.querySelectorAll('#penOpts .pc').forEach(b=>b.classList.toggle('on', b.dataset.pc===opt.penColor));
+  $('#penOpts').style.setProperty('--pen', opt.penColor);
+}
+$('#penOpts').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if (!b) return;
+  if (b.dataset.pw) opt.penWidth=parseFloat(b.dataset.pw);
+  if (b.dataset.pc) opt.penColor=b.dataset.pc;
+  saveOpt(); updatePenUI();
+  if (!isInkTool(tool)) setTool('pen');   // scegliendo colore o spessore si torna a disegnare
+});
 $('#bUndo').addEventListener('click', undo); $('#bRedo').addEventListener('click', redo);
 $('#bZoomIn').addEventListener('click', ()=>zoomCenter(1.2)); $('#bZoomOut').addEventListener('click', ()=>zoomCenter(1/1.2));
 $('#bFit').addEventListener('click', fitView);
@@ -2210,6 +2268,10 @@ function runSelfTest(){
     ['scrittura a mano dentro forma', R=>[...SK.rect(R,0,0,220,110), ...HW(SK.text(R,'OK',50,25,55))], r=>r.nodes.length===1 && !r.edges.length && r.clusters.length===1 && r.clusters[0].target.kind==='node'],
     ['scrittura: due parole = una scritta', R=>HW([...SK.text(R,'NO',0,0,30), ...SK.text(R,'SI',75,2,30)]), r=>r.clusters.length===1 && !r.nodes.length],
     ['scrittura: puntino incluso', R=>HW([...SK.text(R,'I',0,10,20), [[2,0],[2.5,0.5]]]), r=>r.clusters.length===1 && r.clusters[0].items.length===2],
+    ['penna rossa grossa → bordo rosso spesso', R=>SK.rect(R,0,0,170,90).map(st=>Object.assign(st,{c:'#dc2626', w:5.5})), r=>r.nodes.length===1 && r.nodes[0].stroke==='#dc2626' && r.nodes[0].sw===2.5],
+    ['penna verde sottile → connettore verde sottile', R=>[...SK.rect(R,0,0,140,70), ...SK.rect(R,0,200,140,70), ...SK.arrow(R,[70,74],[70,196]).map(st=>Object.assign(st,{c:'#16a34a', w:1.5}))],
+      r=>r.edges.length===1 && r.edges[0].color==='#16a34a' && r.edges[0].width===1 && !r.nodes.some(n=>n.stroke||n.sw)],
+    ['penna nera media → colori del tema', R=>SK.rect(R,0,0,170,90).map(st=>Object.assign(st,{c:'#111827', w:3})), r=>r.nodes.length===1 && !r.nodes[0].stroke && !r.nodes[0].sw],
     ['scritta "SI"', R=>SK.text(R,'SI',0,0,22), r=>r.clusters.length===1 && !r.nodes.length && !r.edges.length],
     ['scritta dentro forma', R=>[...SK.rect(R,0,0,160,80), ...SK.text(R,'NO',60,30,20)], r=>r.nodes.length===1 && r.clusters.length===1 && r.clusters[0].target.kind==='node'],
     ['scritta su freccia', R=>[...SK.rect(R,0,0,140,70), ...SK.rect(R,300,0,140,70), ...SK.arrow(R,[144,35],[296,35]), ...SK.text(R,'SI',205,8,18)],
@@ -2274,6 +2336,9 @@ function runSelfTest(){
 /* ---------------- Avvio ---------------- */
 (function init(){
   try{ const o=JSON.parse(localStorage.getItem('visidraw.opt')||'null'); if (o) opt={...opt, ...o, auto:!!o.auto}; }catch(e){}
+  if (!PEN_COLORS.includes(opt.penColor)) opt.penColor=DEF_INK_COLOR;
+  if (!PEN_WIDTHS.some(p=>p.px===opt.penWidth)) opt.penWidth=DEF_INK_WIDTH;
+  updatePenUI();
   $('#cGrid').checked=opt.grid; $('#cSnap').checked=opt.snap; $('#cIcons').checked=opt.icons; $('#cAuto').checked=opt.auto;
   $('#footer').textContent=`VisiDraw ${APP_VERSION} · offline`;
   initProps();
