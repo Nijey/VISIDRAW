@@ -11,10 +11,10 @@ Un solo file, `visidraw.html`: si apre con un doppio clic, funziona **offline** 
    Nella barra scegli lo **spessore** (sottile, medio, grosso) e il **colore** (nero, blu, rosso, verde, viola).
    Il nero medio dà i colori del tema; con altri colori o spessori forme (bordo), connettori e testi
    mantengono colore e spessore del tratto. Valgono anche per la scrittura a mano.
-2. **Scrittura a mano** (`W`, oppure un altro clic sulla penna già attiva): scrivi le etichette dentro le forme o vicino
-   alle frecce. In questa modalità i tratti (viola) diventano **sempre testo**, mai forme: anche una "O" grande resta una lettera.
-   Sul tablet si scrive anche tenendo premuto il tasto laterale della penna; il retro della penna cancella.
-   In alternativa usa **Testo** `T` da tastiera.
+2. **Scritte**: con la stessa penna scrivi in **stampatello** dentro le forme o accanto alle frecce.
+   Le lettere vicine, di altezza simile e allineate vengono riconosciute come scritta (anche grandi o chiuse come O e D);
+   anche i tratti tracciati dentro una forma diventano la sua etichetta. Sul tablet, tenendo premuto il tasto laterale
+   della penna, il tratto è sempre scritta; il retro della penna cancella. In alternativa usa **Testo** `T` da tastiera.
 3. **✨ Elabora** (`Invio`): riconosce forme, connettori e frecce e **legge le scritte a mano**: la finestra di
    trascrizione arriva già compilata, tu confermi con `Invio` o correggi (svuotando un campo la scritta resta a mano libera).
 
@@ -51,8 +51,8 @@ Modalità **Auto**: forme e linee vengono elaborate da sole dopo una pausa. Menu
 | Linea a gomito | connettore ortogonale (rispetta lati di uscita/entrata disegnati) |
 | Punta a "V" (nello stesso tratto o separata) | freccia (anche doppia) |
 | Estremo vicino a una forma | connettore agganciato: segue la forma quando la sposti |
-| Tratti fatti in modalità Scrittura | sempre scritte da trascrivere, a qualunque dimensione |
-| Tratti piccoli (in modalità Forme) | scritte da trascrivere (dentro la forma → etichetta; vicino a un connettore → etichetta del connettore) |
+| Lettere vicine e allineate, o tratti dentro una forma | scritte (lette e proposte nella trascrizione) |
+| Tratti piccoli | scritte da trascrivere (dentro la forma → etichetta; vicino a un connettore → etichetta del connettore) |
 
 ## Testo
 Carattere (Calibri, Arial, Consolas, Comic Sans, Ebrima) e dimensione si scelgono:

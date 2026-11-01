@@ -142,8 +142,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
     <button class="btn" id="palToggle" title="Forme">☰</button>
     <div class="grp" id="tools">
       <button class="btn" data-tool="select" title="Seleziona e modifica (V)"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6 2-3 6z"/></svg></button>
-      <button class="btn" data-tool="pen" title="Penna FORME: rettangoli, ovali, rombi, linee, frecce (P) · clic di nuovo per passare alla scrittura a mano"><svg viewBox="0 0 24 24"><path d="M4 20l1-5L16 4l4 4L9 19z"/><path d="M14 6l4 4"/></svg><span class="lbl">Forme</span></button>
-      <button class="btn write" data-tool="write" title="SCRITTURA A MANO: i tratti diventano sempre testo, mai forme (W) · clic di nuovo per tornare alle forme · sul tablet anche tenendo premuto il tasto laterale della penna"><svg viewBox="0 0 24 24"><path d="M3 18c2-6 4-9 5-9s-1 7 1 7 3-6 4-6-1 5 1 5 2-2 3-3"/><path d="M15 20h6"/></svg><span class="lbl">Scrittura</span></button>
+      <button class="btn" data-tool="pen" title="Penna: forme, linee, frecce e scritte (P) — le scritte vengono riconosciute da sole"><svg viewBox="0 0 24 24"><path d="M4 20l1-5L16 4l4 4L9 19z"/><path d="M14 6l4 4"/></svg><span class="lbl">Penna</span></button>
       <button class="btn" data-tool="eraser" title="Gomma (E)"><svg viewBox="0 0 24 24"><path d="M8 20h12"/><path d="M4 15l9-9 6 6-7 7H8z"/><path d="M9 10l6 6"/></svg></button>
       <button class="btn" data-tool="text" title="Testo da tastiera (T)"><svg viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></button>
       <button class="btn" data-tool="hand" title="Sposta la vista (H, oppure spazio + trascina)"><svg viewBox="0 0 24 24"><path d="M8 12V6a1.5 1.5 0 013 0v5M11 11V4.5a1.5 1.5 0 013 0V11M14 11V6a1.5 1.5 0 013 0v7c0 4-2.5 7-6 7-2.5 0-4-1-5.5-3L3 13.5a1.5 1.5 0 012.3-1.9L8 14"/></svg></button>
@@ -232,7 +231,6 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
           <g id="lSel"></g>
         </g>
       </svg>
-      <div id="modeBadge"></div>
       <textarea id="editor" spellcheck="false"></textarea>
       <div id="props">
         <div class="sec" id="pNode">
@@ -271,8 +269,8 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
       <div class="step"><b><span class="n">1</span>Disegna con la penna <kbd>P</kbd></b>
         Rettangoli, ovali, rombi, triangoli, parallelogrammi, nuvole; poi linee e frecce tra le forme. Va bene anche con il dito o con la penna del tablet. Scegli spessore (sottile, medio, grosso) e colore: il nero usa i colori del tema, gli altri colori restano nel diagramma.
         <svg viewBox="0 0 240 70"><path d="M12 14 C40 10 70 12 92 13 C94 30 93 45 94 58 C70 60 40 59 13 60 C11 45 12 30 14 12" fill="none" stroke="#1e3a8a" stroke-width="2"/><path d="M98 36 C120 38 140 35 160 37 M150 30 L161 37 L150 44" fill="none" stroke="#1e3a8a" stroke-width="2"/><path d="M200 8 L232 36 L200 64 L168 36 Z" fill="none" stroke="#1e3a8a" stroke-width="2" stroke-linejoin="round"/></svg></div>
-      <div class="step"><b><span class="n">2</span>Scrivi con ✍ Scrittura <kbd>W</kbd></b>
-        Passa alla modalità <b>Scrittura a mano</b> (o clicca di nuovo sulla penna) e scrivi dentro le forme o accanto alle frecce: quei tratti diventano sempre testo, mai forme. In alternativa usa il testo da tastiera <kbd>T</kbd>. Scrivendo <i>router, switch, firewall, server, pc, AP, internet</i>… ottieni l'icona di rete.
+      <div class="step"><b><span class="n">2</span>Scrivi le etichette</b>
+        Con la stessa penna scrivi in <b>stampatello</b> dentro le forme o accanto alle frecce: le lettere vicine e allineate vengono riconosciute come scritta, non come forme. In alternativa usa il testo da tastiera <kbd>T</kbd>. Scrivendo <i>router, switch, firewall, server, pc, AP, internet</i>… ottieni l'icona di rete.
         <svg viewBox="0 0 240 70"><rect x="14" y="12" width="90" height="46" rx="3" fill="none" stroke="#1e3a8a" stroke-width="2"/><path d="M34 40c4-10 8-10 10 0s6 6 9-6M58 30v12M64 32c6-4 10 4 3 8s0 4 6 0" fill="none" stroke="#1e3a8a" stroke-width="2"/><circle cx="170" cy="35" r="22" fill="#1f6fb2"/><path d="M160 25l8 8M180 45l-8-8M180 25l-8 8M160 45l8-8" stroke="#fff" stroke-width="3"/></svg></div>
       <div class="step"><b><span class="n">3</span>Premi ✨ Elabora <kbd>Invio</kbd></b>
         Le forme diventano regolari e allineate, le linee si agganciano alle forme e le frecce vengono riconosciute. Poi trascrivi le scritte a mano nella finestra che compare.
@@ -281,7 +279,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
         Con <kbd>V</kbd> sposti e ridimensioni; doppio clic modifica il testo; dal pannello cambi forma, colori e frecce. Esporta in PNG, SVG o draw.io (da lì anche in Visio .vsdx).
         <svg viewBox="0 0 240 70"><rect x="20" y="12" width="90" height="46" rx="4" fill="#dae8fc" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 3"/><rect x="16" y="8" width="8" height="8" fill="#fff" stroke="#3b82f6"/><rect x="106" y="54" width="8" height="8" fill="#fff" stroke="#3b82f6"/><path d="M150 18h70v40h-70z" fill="#fff" stroke="#94a3b8"/><path d="M160 30h50M160 40h40M160 50h30" stroke="#94a3b8"/></svg></div>
     </div>
-    <p><b>Suggerimenti:</b> clic sulla penna attiva = cambio Forme ↔ Scrittura · tasto laterale della penna del tablet = scrittura, retro della penna = gomma · <kbd>rotellina</kbd> zoom · <kbd>spazio</kbd>+trascina oppure tasto destro per spostare la vista · con la penna del tablet il dito sposta la vista · <kbd>Ctrl+Z</kbd> annulla · <kbd>Canc</kbd> elimina · menu <b>Esempi</b> per provare subito.</p>
+    <p><b>Suggerimenti:</b> tasto laterale della penna del tablet = tratto sempre scritta, retro della penna = gomma · <kbd>rotellina</kbd> zoom · <kbd>spazio</kbd>+trascina oppure tasto destro per spostare la vista · con la penna del tablet il dito sposta la vista · <kbd>Ctrl+Z</kbd> annulla · <kbd>Canc</kbd> elimina · menu <b>Esempi</b> per provare subito.</p>
     <div class="foot">
       <button class="btn" id="hExample">Prova un esempio</button>
       <button class="btn primary" id="hClose">Inizia a disegnare</button>
@@ -319,7 +317,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -613,6 +611,7 @@ function chainClosures(items){
           chain.forEach((x,ix)=>{ x.used = ix>0; });
           const head=chain[0];
           head.kind='closed'; head.closed=c; head.closedPts=q; head.used=false; head.merged=chain.slice(1);
+          head.b=bboxOf(pts); head.big=Math.max(head.b.w, head.b.h)*head.k;   // riquadro della forma intera
           chain.slice(1).forEach(x=>{ x.kind='merged'; });
           i=j; break;
         }
@@ -730,7 +729,7 @@ function clusterText(items, nodes, edges, getNode){
     let target={kind:'free'};
     if (node) target={kind:'node', id:node.id};
     else {
-      let be=null, bd=30/its[0].k;
+      let be=null, bd=Math.max(30/its[0].k, 0.5*b.h+20/its[0].k);   // scritte grandi: il centro è più lontano dalla linea
       for (const e of edges){ const g=edgeGeom(e, getNode); if (!g) continue; const d=polyDist(c, g.pts); if (d<bd){ bd=d; be=e; } }
       if (be) target={kind:'edge', id:be.id};
     }
@@ -740,20 +739,88 @@ function clusterText(items, nodes, edges, getNode){
   clusters.sort((a,b)=>a.b.y-b.b.y || a.b.x-b.b.x);
   return clusters;
 }
+// Scritte anche con la penna FORME: le lettere sono vicine fra loro, di altezza simile e allineate,
+// mentre forme e connettori sono più grandi, isolati o agganciati alle forme.
+const inBox=(b, n, m=2)=>b.x>=n.x-m && b.y>=n.y-m && b.x+b.w<=n.x+n.w+m && b.y+b.h<=n.y+n.h+m;
+function detectText(items, existingNodes){
+  const dim=it=>Math.max(it.b.w, it.b.h);
+  const contains=(c, o)=>o!==c && o.b.cx>c.b.x && o.b.cx<c.b.x+c.b.w && o.b.cy>c.b.y && o.b.cy<c.b.y+c.b.h && dim(o)<0.6*dim(c);
+  const isCand=it=>{
+    if (it.hw) return false;                                   // già scrittura
+    if (it.kind==='merged' || it.kind==='dot') return false;
+    if (it.kind==='closed'){
+      if (it.big>=110 || it.b.w>1.35*it.b.h) return false;   // forme grandi o larghe (le lettere chiuse sono piccole e strette)
+      if (items.some(o=>contains(it, o))) return false;                    // contenitore: forma con dentro una scritta
+      return true;
+    }
+    if (it.kind==='line'){
+      if (it.big>=140 || it.open.arrowA || it.open.arrowB) return false;    // linee lunghe o frecce
+      // agganciata a una forma esistente (e non dentro di essa): è un connettore
+      for (const n of existingNodes) if (!inBox(it.b, n) && (attachAt(it.open.a, [n], it.k) || attachAt(it.open.b, [n], it.k))) return false;
+      return true;
+    }
+    return true;
+  };
+  const cand=items.filter(isCand);
+  // forme grandi (non candidate) a cui una linea si aggancia: anche quella è un connettore
+  const shapes=items.filter(it=>it.kind==='closed' && !cand.includes(it)).map(it=>({x:it.b.x, y:it.b.y, w:it.b.w, h:it.b.h}));
+  const conn=new Set(cand.filter(it=>it.kind==='line' && shapes.some(n=>!inBox(it.b,n) && (attachAt(it.open.a,[n],it.k) || attachAt(it.open.b,[n],it.k)))));
+  const C=cand.filter(it=>!conn.has(it)), n=C.length, parent=C.map((_,i)=>i);
+  const find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
+  const linked=(A,B)=>{
+    const a=A.b, b=B.b, da=dim(A), db=dim(B);
+    if (Math.max(da,db) > 3*Math.min(da,db)) return false;           // dimensioni troppo diverse (es. linea e punta di freccia)
+    const m=0.1*Math.max(da,db);
+    const touch = a.x-m < b.x+b.w && b.x-m < a.x+a.w && a.y-m < b.y+b.h && b.y-m < a.y+a.h;
+    if (touch) return true;
+    const hA=Math.max(a.h, 0.25*da), hB=Math.max(b.h, 0.25*db), H=Math.max(hA, hB);
+    const ov=Math.min(a.y+a.h, b.y+b.h)-Math.max(a.y, b.y), gap=Math.max(b.x-(a.x+a.w), a.x-(b.x+b.w));
+    return ov >= 0.5*Math.min(a.h, b.h) && gap <= 0.7*H && Math.min(hA,hB) >= 0.35*H;
+  };
+  for (let i=0;i<n;i++) for (let j=i+1;j<n;j++) if (linked(C[i], C[j])) parent[find(i)]=find(j);
+  const groups=new Map();
+  C.forEach((it,i)=>{ const r=find(i); if (!groups.has(r)) groups.set(r,[]); groups.get(r).push(it); });
+  for (const g of groups.values()){
+    if (g.length<2) continue;
+    // due sole linee dritte affiancate (es. due connettori paralleli) non sono una scritta, a meno che si tocchino
+    if (g.length===2 && g.every(it=>it.kind==='line' && it.open.style==='straight')){
+      const [A,B]=g, m=0.1*Math.max(dim(A),dim(B));
+      if (!(A.b.x-m < B.b.x+B.b.w && B.b.x-m < A.b.x+A.b.w && A.b.y-m < B.b.y+B.b.h && B.b.y-m < A.b.y+A.b.h)) continue;
+    }
+    for (const it of g){
+      it.kind='small'; it.hw=true; it.textAuto=true;
+      // lettera chiusa fatta di più tratti (es. D): anche gli altri tratti tornano scrittura
+      if (it.merged){ it.merged.forEach(m=>{ m.kind='small'; m.hw=true; m.used=false; m.textAuto=true; }); it.merged=null; }
+    }
+  }
+}
+// Tratti interamente dentro una forma e più piccoli di lei: scritte (etichetta della forma)
+function insideText(items, nodes){
+  for (const it of items){
+    if (it.used || it.hw || !['line','small','closed'].includes(it.kind)) continue;
+    const d=Math.max(it.b.w, it.b.h);
+    if (nodes.some(n=>inBox(it.b, n, 2) && d < (it.kind==='closed'?0.6:0.85)*Math.min(n.w, n.h))){ it.kind='small'; it.hw=true; it.textAuto=true; }
+  }
+}
 /* Riconoscimento completo: non modifica lo stato, restituisce le proposte. */
 function recognize(inks, existingNodes, existingEdges){
   const items=inks.slice().sort((a,b)=>(a.t0||0)-(b.t0||0)).map(analyzeInk);
   chainClosures(items);
   reclassLetters(items);
+  detectText(items, existingNodes);
+  // forme chiuse dentro una forma più grande e molto più piccole: lettere (es. una O nell'etichetta)
+  const closed=items.filter(it=>it.kind==='closed');
+  for (const it of closed) if (closed.some(c=>c!==it && inBox(it.b, c.b) && Math.max(it.b.w,it.b.h) < 0.6*Math.min(c.b.w,c.b.h))){ it.kind='small'; it.hw=true; it.textAuto=true; }
   const nodes=[];
   for (const it of items) if (it.kind==='closed'){ nodes.push(makeNodeFromClosed(it)); it.used=true; }
   const all=existingNodes.concat(nodes);
+  insideText(items, all);
   const nmap=new Map(all.map(n=>[n.id,n])), getNode=id=>nmap.get(id);
   const lines=items.filter(it=>it.kind==='line');
   const smalls=items.filter(it=>it.kind==='small');
   // brevi tratti dritti fra due forme vicine: sono collegamenti, non scritte
   for (const s of smalls){
-    if (s.open && s.open.style==='straight' && s.L*s.k>=12){
+    if (s.open && !s.hw && s.open.style==='straight' && s.L*s.k>=12){
       const A=attachAt(s.open.a, all, s.k), B=attachAt(s.open.b, all, s.k);
       if (A && B && A!==B){ s.kind='line'; lines.push(s); }
     }
@@ -1669,9 +1736,6 @@ function setTool(t){
   tool=t; hoverId=null; if (t!=='select') sel.clear();
   document.querySelectorAll('#tools .btn').forEach(b=>b.classList.toggle('on', b.dataset.tool===t));
   board.setAttribute('class', 't-'+t);
-  const mb=$('#modeBadge');
-  mb.className = t==='pen' ? 'pen' : t==='write' ? 'write' : '';
-  mb.textContent = t==='pen' ? '✏️ Modalità FORME' : t==='write' ? '✍ Modalità SCRITTURA A MANO' : '';
   closeEditor(true); render();
 }
 const isInkTool = t => t==='pen' || t==='write';
@@ -1968,7 +2032,7 @@ window.addEventListener('keydown', e=>{
       if (o.pts) o.pts=o.pts.map(p=>[p[0]+dx,p[1]+dy]); else if (o.x!==undefined){ o.x+=dx; o.y+=dy; } }
     commit(); e.preventDefault(); return;
   }
-  const map={v:'select', p:'pen', w:'write', e:'eraser', t:'text', h:'hand'};
+  const map={v:'select', p:'pen', e:'eraser', t:'text', h:'hand'};
   if (map[key]){ setTool(map[key]); return; }
   if (key==='f'){ fitView(); return; }
   if (key==='+'||key==='='){ zoomCenter(1.2); return; }
@@ -2505,7 +2569,7 @@ const SK={
         const pts=st.map(p=>{ const px=(p[0]-b.x)*sx, py=p[1]+dy; return [cx+(px+slant*(1-py))*h+J(R,0.02*h), y+py*h+J(R,0.02*h)]; });
         out.push(wobble(pts, R, 0.025*h));
       }
-      cx+=(b.w*sx+0.22+R()*0.12)*h;
+      cx+=(b.w*sx+(o.gap!==undefined ? o.gap+R()*0.05 : 0.22+R()*0.12))*h;
     }
     return out; },
   text(R,str,x,y,h){ // poche lettere in stampatello, abbastanza per la demo
@@ -2622,12 +2686,7 @@ $('#cGrid').addEventListener('change', e=>{ opt.grid=e.target.checked; saveOpt()
 $('#cSnap').addEventListener('change', e=>{ opt.snap=e.target.checked; saveOpt(); });
 $('#cIcons').addEventListener('change', e=>{ opt.icons=e.target.checked; saveOpt(); });
 $('#cAuto').addEventListener('change', e=>{ opt.auto=e.target.checked; saveOpt(); if (opt.auto) toast('Auto: forme e linee vengono elaborate da sole dopo una pausa. Le scritte con ✨ Elabora.'); });
-document.querySelectorAll('#tools .btn').forEach(b=>b.addEventListener('click', ()=>{
-  // clic sulla penna già attiva: alterna FORME ↔ SCRITTURA A MANO
-  const t=b.dataset.tool;
-  if (isInkTool(t) && isInkTool(tool) && t===tool){ setTool(t==='pen'?'write':'pen'); toast(tool==='write'?'✍ Scrittura a mano: quello che scrivi diventa testo.':'✏️ Forme: disegna forme, linee e frecce.'); }
-  else setTool(t);
-}));
+document.querySelectorAll('#tools .btn').forEach(b=>b.addEventListener('click', ()=>setTool(b.dataset.tool)));
 $('#bElab').addEventListener('click', ()=>elaborate(false));
 function updatePenUI(){
   document.querySelectorAll('#penOpts .pw').forEach(b=>b.classList.toggle('on', parseFloat(b.dataset.pw)===opt.penWidth));
@@ -2687,6 +2746,13 @@ function runSelfTest(){
     ['penna verde sottile → connettore verde sottile', R=>[...SK.rect(R,0,0,140,70), ...SK.rect(R,0,200,140,70), ...SK.arrow(R,[70,74],[70,196]).map(st=>Object.assign(st,{c:'#16a34a', w:1.5}))],
       r=>r.edges.length===1 && r.edges[0].color==='#16a34a' && r.edges[0].width===1 && !r.nodes.some(n=>n.stroke||n.sw)],
     ['penna nera media → colori del tema', R=>SK.rect(R,0,0,170,90).map(st=>Object.assign(st,{c:'#111827', w:3})), r=>r.nodes.length===1 && !r.nodes[0].stroke && !r.nodes[0].sw],
+    ['penna normale: parola grande in stampatello', R=>SK.hand(R,'ROUTER',0,0,60,{gap:0.06}), r=>r.clusters.length===1 && !r.nodes.length && !r.edges.length],
+    ['penna normale: "DB" con lettere chiuse', R=>SK.hand(R,'DOC',0,0,55,{gap:0.08}), r=>r.clusters.length===1 && !r.nodes.length && !r.edges.length],
+    ['penna normale: scritta grande dentro forma', R=>[...SK.rect(R,0,0,320,150), ...SK.hand(R,'PC 1',60,45,55,{gap:0.08})], r=>r.nodes.length===1 && !r.edges.length && r.clusters.length===1 && r.clusters[0].target.kind==='node'],
+    ['penna normale: etichetta grande su freccia', R=>[...SK.rect(R,0,0,140,70), ...SK.rect(R,420,0,140,70), ...SK.arrow(R,[144,35],[416,35]), ...SK.hand(R,'SI',250,-12,34,{gap:0.08})],
+      r=>r.nodes.length===2 && r.edges.length===1 && r.clusters.length===1 && r.clusters[0].target.kind==='edge'],
+    ['due connettori paralleli vicini non sono scritte', R=>[...SK.rect(R,0,0,200,70), ...SK.rect(R,-60,200,120,60), ...SK.rect(R,140,200,120,60), ...SK.line(R,[70,74],[0,196]), ...SK.line(R,[130,74],[200,196])],
+      r=>r.nodes.length===3 && r.edges.length===2 && !r.clusters.length],
     ['scritta "SI"', R=>SK.text(R,'SI',0,0,22), r=>r.clusters.length===1 && !r.nodes.length && !r.edges.length],
     ['scritta dentro forma', R=>[...SK.rect(R,0,0,160,80), ...SK.text(R,'NO',60,30,20)], r=>r.nodes.length===1 && r.clusters.length===1 && r.clusters[0].target.kind==='node'],
     ['scritta su freccia', R=>[...SK.rect(R,0,0,140,70), ...SK.rect(R,300,0,140,70), ...SK.arrow(R,[144,35],[296,35]), ...SK.text(R,'SI',205,8,18)],
