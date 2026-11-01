@@ -319,7 +319,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -1110,17 +1110,20 @@ function hwLearnFrom(rec, text){
 
 /* ---------------- 4. Forme, icone e connettori ---------------- */
 const SHAPES = ['rect','round','ellipse','diamond','parallelogram','triangle','hexagon','document','cylinder','cloud'];
-const ICONS = ['router','switch','firewall','server','pc','laptop','ap','printer','phone'];
+const ICONS = ['router','switch','catalyst','firewall','server','datacenter','pc','laptop','ap','modem','printer','phone'];
 const TYPE_NAMES = {rect:'Rettangolo', round:'Rettangolo arrotondato', ellipse:'Ellisse / cerchio', diamond:'Rombo (decisione)',
   parallelogram:'Parallelogramma (I/O)', triangle:'Triangolo', hexagon:'Esagono (preparazione)', document:'Documento',
   cylinder:'Database', cloud:'Nuvola / Internet', router:'Router', switch:'Switch', firewall:'Firewall', server:'Server',
-  pc:'PC', laptop:'Portatile', ap:'Access point Wi-Fi', printer:'Stampante', phone:'Telefono IP'};
+  pc:'PC', laptop:'Portatile', ap:'Access point Wi-Fi', printer:'Stampante', phone:'Telefono IP',
+  catalyst:'Catalyst (switch L3)', datacenter:'Datacenter', modem:'Modem'};
 const SHORT_NAMES = {rect:'Processo', round:'Attività', ellipse:'Inizio/Fine', diamond:'Decisione', parallelogram:'Dati I/O',
   triangle:'Triangolo', hexagon:'Preparaz.', document:'Documento', cylinder:'Database', cloud:'Nuvola',
-  router:'Router', switch:'Switch', firewall:'Firewall', server:'Server', pc:'PC', laptop:'Portatile', ap:'Access point', printer:'Stampante', phone:'Telefono'};
+  router:'Router', switch:'Switch', firewall:'Firewall', server:'Server', pc:'PC', laptop:'Portatile', ap:'Access point', printer:'Stampante', phone:'Telefono',
+  catalyst:'Catalyst', datacenter:'Datacenter', modem:'Modem'};
 const DEF_SIZE = {rect:[140,70], round:[140,70], ellipse:[130,64], diamond:[140,90], parallelogram:[150,70], triangle:[110,90],
   hexagon:[140,70], document:[140,80], cylinder:[100,90], cloud:[160,100],
-  router:[60,60], switch:[80,44], firewall:[60,56], server:[46,66], pc:[64,58], laptop:[70,50], ap:[60,50], printer:[62,56], phone:[48,56]};
+  router:[60,60], switch:[80,44], firewall:[60,56], server:[46,66], pc:[64,58], laptop:[70,50], ap:[60,50], printer:[62,56], phone:[48,56],
+  catalyst:[62,58], datacenter:[78,62], modem:[70,40]};
 const isIcon = t => ICONS.includes(t);
 const THEMES = {
   visio:{fill:'#dae8fc', stroke:'#2f5597', text:'#1b1b1b', edge:'#404040', icon:'#1f6fb2'},
@@ -1496,6 +1499,30 @@ function drawIcon(g, n, c){
       el('path',{d:`M${r1(x+w*0.12)} ${r1(y+h*0.2)}Q${cx} ${r1(y-h*0.1)} ${r1(x+w*0.88)} ${r1(y+h*0.2)}`, fill:'none', stroke:c, 'stroke-width':r1(h*0.15), 'stroke-linecap':'round'},g);
       for (let i=0;i<3;i++) for (let j=0;j<3;j++) el('circle',{cx:r1(x+w*(0.3+0.2*j)), cy:r1(y+h*(0.47+0.15*i)), r:r1(Math.min(w,h)*0.045), fill:W},g);
       break; }
+    case 'catalyst': {
+      // switch multilayer (L3): riquadro con quattro frecce verso l'esterno
+      R(x,y,w,h,6,c);
+      const s=Math.min(w,h)*0.1, r=Math.min(w,h)/2;
+      for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) arrowGlyph(g, [cx+dx*r*0.14, cy+dy*r*0.14], [cx+dx*r*0.78, cy+dy*r*0.78], s, W);
+      break; }
+    case 'datacenter': {
+      // tre armadi rack con server e led
+      const rw=w*0.3, gap=w*0.05;
+      for (let i=0;i<3;i++){
+        const rx=x+i*(rw+gap); R(rx,y,rw,h*0.92,3,c);
+        for (let j=0;j<4;j++){ const yy=y+h*(0.1+0.2*j); R(rx+rw*0.14, yy, rw*0.72, h*0.12, 1, W);
+          el('circle',{cx:r1(rx+rw*0.7), cy:r1(yy+h*0.06), r:r1(Math.min(rw,h)*0.05), fill:'#22c55e'},g); }
+      }
+      R(x-w*0.02,y+h*0.92,w*1.04,h*0.08,2,c);
+      break; }
+    case 'modem': {
+      // scatola piatta con onda del segnale e led
+      R(x,y+h*0.18,w,h*0.82,6,c);
+      el('path',{d:`M${r1(x+w*0.12)} ${r1(y+h*0.5)}`+[1,2,3,4].map(i=>`Q${r1(x+w*(0.12+0.1*(i-0.5)))} ${r1(y+h*(i%2?0.3:0.7))} ${r1(x+w*(0.12+0.1*i))} ${r1(y+h*0.5)}`).join(''),
+        fill:'none', stroke:W, 'stroke-width':r1(Math.max(1.5,h*0.07)), 'stroke-linecap':'round'},g);
+      for (let i=0;i<3;i++) el('circle',{cx:r1(x+w*(0.66+0.1*i)), cy:r1(y+h*0.62), r:r1(h*0.07), fill:i===0?'#22c55e':W},g);
+      el('line',{x1:r1(x+w*0.88), y1:r1(y+h*0.18), x2:r1(x+w*0.94), y2:r1(y), stroke:c, 'stroke-width':r1(Math.max(2,h*0.08)), 'stroke-linecap':'round'},g);
+      break; }
   }
 }
 function drawNode(n, parent){
@@ -1603,13 +1630,15 @@ function drawSelection(){
     for (const id of sel){ const o=findAny(id); if (!o) continue; if (o.w!==undefined) show.add(o.id); if (o.a){ if (o.a.n) show.add(o.a.n); if (o.b.n) show.add(o.b.n); } }
     if (hoverId) show.add(hoverId);
   }
+  // prima le croci di aggancio, poi le maniglie: l'estremo di un connettore resta afferrabile anche sopra una croce
+  for (const id of show){ const n=nodeById(id); if (n) drawAnchors(n, s, k); }
   for (const id of sel){
     const o=findAny(id); if (!o) continue;
     if (o.a){ // connettore
       const geo=o._geo; if (!geo) continue;
       el('path', {d:geo.d, fill:'none', stroke:'#3b82f6', 'stroke-opacity':0.35, 'stroke-width':6/k, 'pointer-events':'none'}, s);
       if (sel.size===1) for (const [end,p] of [['a',geo.ends[0]],['b',geo.ends[1]]])
-        el('circle', {cx:p[0], cy:p[1], r:6/k, fill:'#fff', stroke:'#3b82f6', 'stroke-width':2/k, 'data-handle':'end-'+end, 'data-for':id, style:'cursor:move'}, s);
+        el('circle', {cx:p[0], cy:p[1], r:7/k, fill:'#fff', stroke:'#3b82f6', 'stroke-width':2/k, 'data-handle':'end-'+end, 'data-for':id, style:'cursor:move'}, s);
     } else {
       const b=itemBBox(id); if (!b) continue;
       const m=(o.w!==undefined ? 9 : 4)/k;   // margine: le maniglie non coprono i punti di aggancio
@@ -1620,7 +1649,6 @@ function drawSelection(){
       }
     }
   }
-  for (const id of show){ const n=nodeById(id); if (n) drawAnchors(n, s, k); }
   // trascinando un estremo: evidenzia in verde il punto dove si aggancerà
   if (gesture && gesture.type==='endpoint' && gesture.snap){
     const sn=gesture.snap;
@@ -1770,8 +1798,22 @@ function deleteIds(ids){
   ids.forEach(id=>sel.delete(id));
 }
 // --- selezione ---
+// Estremo di connettore vicino al punto (per spostarlo su un altro punto di aggancio)
+function edgeEndAt(w){
+  let best=null, bd=10/view.k;
+  for (const ed of S.edges){ const g=ed._geo; if (!g) continue;
+    for (const [end,p] of [['a',g.ends[0]],['b',g.ends[1]]]){ const d=dist(p,w); if (d<bd){ bd=d; best={id:ed.id, end}; } } }
+  return best;
+}
 function selectDown(e, w){
   const h=e.target.closest && e.target.closest('[data-handle]');
+  const tgt=e.target.closest && e.target.closest('#vp [data-id]');
+  // clic sull'estremo di un connettore (anche sopra una croce di aggancio): si trascina l'estremo;
+  // Maiusc + trascina da una croce crea comunque un nuovo connettore
+  if (!(h && h.dataset.handle!=='anchor') && !(h && e.shiftKey)){
+    const ee=(h || (tgt && S.edges.some(x=>x.id===tgt.dataset.id))) ? edgeEndAt(w) : null;
+    if (ee){ sel=new Set([ee.id]); gesture={type:'endpoint', id:ee.id, end:ee.end}; render(); return; }
+  }
   if (h){
     const id=h.dataset.for, o=findAny(id), hn=h.dataset.handle;
     if (hn==='anchor'){
@@ -1949,7 +1991,8 @@ function duplicateSel(){
 }
 
 /* ---- Elaborazione: dallo schizzo al diagramma ---- */
-const ICON_WORDS=[['router',/^(router|rtr|gateway|gw)\b/i], ['switch',/^(switch|sw)\b/i], ['firewall',/^(firewall|fw|utm)\b/i],
+const ICON_WORDS=[['router',/^(router|rtr|gateway|gw)\b/i], ['catalyst',/^(catalyst|l3|multilayer|switch l3|sw l3)\b/i], ['switch',/^(switch|sw)\b/i],
+  ['datacenter',/^(datacenter|data ?center|dc|ced)\b/i], ['modem',/^(modem|adsl|vdsl|ont|cpe)\b/i], ['firewall',/^(firewall|fw|utm)\b/i],
   ['server',/^(server|srv|nas)\b/i], ['laptop',/^(laptop|notebook|portatile)\b/i], ['pc',/^(pc|client|desktop|workstation)\b/i],
   ['ap',/^(ap|access ?point|wi-?fi)\b/i], ['printer',/^(stampante|printer)\b/i], ['phone',/^(telefono|phone|voip)\b/i],
   ['cloud',/^(internet|cloud|nuvola|wan)\b/i], ['cylinder',/^(db|database)\b/i]];
@@ -2372,14 +2415,15 @@ const DRAWIO_STYLE={rect:'rounded=0;whiteSpace=wrap;html=1;', round:'rounded=1;w
   cloud:'ellipse;shape=cloud;whiteSpace=wrap;html=1;',
   router:'mxgraph.cisco.routers.router', switch:'mxgraph.cisco.switches.workgroup_switch', firewall:'mxgraph.cisco.security.firewall',
   server:'mxgraph.cisco.servers.fileserver', pc:'mxgraph.cisco.computers_and_peripherals.pc', laptop:'mxgraph.cisco.computers_and_peripherals.laptop',
-  ap:'mxgraph.cisco.wireless.access_point', printer:'mxgraph.cisco.computers_and_peripherals.printer', phone:'mxgraph.cisco.modems_and_phones.ip_phone'};
+  ap:'mxgraph.cisco.misc.access_point', printer:'mxgraph.cisco.computers_and_peripherals.printer', phone:'mxgraph.cisco.modems_and_phones.ip_phone',
+  catalyst:'mxgraph.cisco.switches.layer_3_switch', modem:'mxgraph.cisco.modems_and_phones.modem', datacenter:'mxgraph.cisco19.data_center2'};
 function exportDrawio(){
   if (!S.nodes.length && !S.edges.length && !S.texts.length) return toast('Il foglio è vuoto.');
   const th=THEMES[S.theme]||THEMES.visio, val=s=>xmlEsc(xmlEsc(s||'').replace(/\n/g,'<br>'));
   const cells=['<mxCell id="0"/>','<mxCell id="1" parent="0"/>'];
   for (const n of S.nodes){
     const c=colorsOf(n); let st;
-    if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;fillColor=${c.fill};strokeColor=#ffffff;strokeWidth=2;verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
+    if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;`+(n.type==='datacenter'?'fillColor=#fafafa;strokeColor=#005073;':`fillColor=${c.fill};strokeColor=#ffffff;strokeWidth=2;`)+`verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
     else st=DRAWIO_STYLE[n.type]+`fillColor=${c.fill};strokeColor=${c.stroke};`+(n.type==='triangle'&&n.dir==='down'?'direction=south;':'');
     st+=`fontSize=${n.fs||14};fontFamily=${fontName(n)};`+(n.dash?'dashed=1;':'')+(n.sw&&!isIcon(n.type)?`strokeWidth=${n.sw};`:'');
     if (n.type==='triangle' && n.dir==='down') st=st.replace('direction=north;','');

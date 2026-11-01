@@ -32,12 +32,14 @@ le 4 metà dei lati. I connettori agganciati alle forme sono **ortogonali** (sol
 mai diagonali): da uno spigolo escono in orizzontale o in verticale.
 - **Aggancio automatico**: il connettore sceglie da solo i lati migliori e li ricalcola quando sposti le forme.
 - **Nuovo connettore**: trascina da una croce verso un'altra forma.
+- **Spostare un connettore**: con **Seleziona** afferra direttamente il suo estremo (anche se è sopra una croce)
+  e trascinalo su un'altra croce o su un'altra forma; *Maiusc* + trascina da una croce crea invece un nuovo connettore.
 - **Punto fisso**: trascina un estremo del connettore su una croce (cerchio verde) oppure in un **punto
   intermedio** lungo il contorno; il punto resta in proporzione anche ridimensionando la forma.
   Rilasciandolo dentro la forma torna all'aggancio automatico (anche con *Aggancio › Automatico* nel pannello).
 
-Altro: tavolozza di forme e icone di rete (router, switch, firewall, server, PC, portatile, AP, stampante, telefono).
-Scrivendo *router, switch, firewall, server, pc, AP, internet, database*… la forma diventa l'icona corrispondente.
+Altro: tavolozza di forme e icone di rete (router, switch, Catalyst/switch L3, firewall, server, datacenter, PC, portatile, AP, modem, stampante, telefono).
+Scrivendo *router, switch, catalyst, firewall, server, datacenter, modem, pc, AP, internet, database*… la forma diventa l'icona corrispondente.
 Modalità **Auto**: forme e linee vengono elaborate da sole dopo una pausa. Menu **Esempi** per provare subito.
 
 ## Cosa riconosce
