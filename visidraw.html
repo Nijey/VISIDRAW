@@ -321,7 +321,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.9.1';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -969,7 +969,9 @@ const HW_WORDS=('inizio fine start end stop si no ok ko errore router switch fir
   'si sì no rete lan1 lan2 vlan10 vlan20 piano1 piano2 sw1 sw2 r1 r2 fw1 srv1 pc1 ap1 '+
   'datacenter catalyst distribution distribuzione core access hub bridge proxy san isp ups rack onu olt lte 4g 5g adsl vdsl '+
   'azure aws office pbx centralino reception amministrazione direzione tecnico terra primo secondo terzo edificio dmz '+
-  'nas srv sw fw rtr gw dc ad radius ldap siem nac wlc controller ups cctv nvr badge tornello').split(/\s+/).filter(Boolean);
+  'nas srv sw fw rtr gw dc ad radius ldap siem nac wlc controller ups cctv nvr badge tornello '+
+  'tv fire firetv stick smart televisore console playstation ps4 ps5 xbox nintendo luce luci lampada hue philips '+
+  'ev colonnina wallbox ricarica auto echo alexa amazon speaker soundbar sound bar barra audio home theater').split(/\s+/).filter(Boolean);
 const HW_N=32;
 let HW_TPL=null, hwLearn={tpl:[], words:[]};
 const HW_HALF=new WeakMap();   // nuvole ridotte (16 punti) per la stima rapida
@@ -2212,7 +2214,14 @@ const ICON_WORDS=[['router',/^(router|rtr|gateway|gw)\b/i], ['catalyst',/^(catal
   ['datacenter',/^(datacenter|data ?center|dc|ced)\b/i], ['modem',/^(modem|adsl|vdsl|ont|cpe)\b/i], ['firewall',/^(firewall|fw|utm)\b/i],
   ['server',/^(server|srv|nas)\b/i], ['laptop',/^(laptop|notebook|portatile)\b/i], ['pc',/^(pc|client|desktop|workstation)\b/i],
   ['ap',/^(ap|access ?point|wi-?fi)\b/i], ['printer',/^(stampante|printer)\b/i], ['phone',/^(telefono|phone|voip)\b/i],
-  ['cloud',/^(internet|cloud|nuvola|wan)\b/i], ['cylinder',/^(db|database)\b/i]];
+  ['cloud',/^(internet|cloud|nuvola|wan)\b/i], ['cylinder',/^(db|database)\b/i],
+  // casa e intrattenimento
+  ['firetv',/^((amazon )?fire ?(tv|stick)|firestick|smart ?tv|tv|televisore|televisione)\b/i],
+  ['console',/^(console|videogame|videogioc[oh]i?|playstation|ps[2-5]|xbox|nintendo|gaming)\b/i],
+  ['smartlight',/^((philips )?hue|philips|luce|luci|lampada|lampadina|smart ?light)\b/i],
+  ['evcharger',/^(ev|evse|colonnina|wallbox|charger|ricarica (ev|auto))\b/i],
+  ['echo',/^((amazon )?echo|alexa|smart ?speaker)\b/i],
+  ['soundbar',/^(sound ?bar|barra audio|home ?theat(er|re))\b/i]];
 function applyIconKeyword(n){
   if (!opt.icons || !n.text || isIcon(n.type) || !['rect','round','ellipse','diamond','parallelogram','hexagon'].includes(n.type)) return;
   const first=n.text.trim();
@@ -2972,6 +2981,15 @@ function runSelfTest(){
     const big={...n0, w:n0.w*2, h:n0.h*2};
     geo.push(['il punto intermedio segue il ridimensionamento', !!sn && dist(anchorPoint(big, sn.p), [big.x+big.w*0.3, big.y])<1]);
   }
+  { // parole chiave scritte dentro una forma → icona (anche casa e intrattenimento)
+    const savedIcons=opt.icons; opt.icons=true;
+    const kw=[['ROUTER','router'], ['TV','firetv'], ['Fire TV','firetv'], ['Console','console'], ['PS5','console'], ['Philips Hue','smartlight'],
+      ['Luce','smartlight'], ['Wallbox','evcharger'], ['Ricarica EV','evcharger'], ['Echo','echo'], ['Alexa','echo'], ['Soundbar','soundbar'],
+      ['Fine','rect'], ['Ricarica credito','rect'], ['Evento','rect']];
+    const bad=kw.filter(([t, type])=>{ const n={type:'rect', x:0, y:0, w:120, h:60, text:t}; applyIconKeyword(n); return n.type!==type; }).map(k=>k[0]);
+    opt.icons=savedIcons;
+    geo.push([`parole chiave → icone${bad.length?': '+bad.join(', '):''}`, !bad.length]);
+  }
   lines.push('');
   for (const [name, pass] of geo){ tot++; if (pass) ok++; lines.push(`${pass?'✔':'✘'} ${name}`); }
   // --- lettura della scrittura a mano (scritte sintetiche in stampatello, deformate) ---
@@ -2992,7 +3010,7 @@ function runSelfTest(){
   }
   // stampatello maiuscolo con lettere molto vicine e scrittura imprecisa (opzione "solo maiuscole")
   opt.hwUpper=true;
-  for (const w of ['ROUTER','SWITCH CORE','FIREWALL','DATACENTER','VLAN 10','PC 12','ERRORE','STAMPANTE']){
+  for (const w of ['ROUTER','SWITCH CORE','FIREWALL','DATACENTER','VLAN 10','PC 12','ERRORE','STAMPANTE','TV','ECHO','WALLBOX']){
     let pass=0; const fails=[];
     for (let seed=1; seed<=5; seed++){
       const R=rng(seed*31+w.length*7), inks=inksFrom(SK.hand(R, w, 0, 0, 30+R()*25, {gap:0.05, messy:0.8}));

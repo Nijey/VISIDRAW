@@ -44,7 +44,9 @@ mai diagonali): da uno spigolo escono in orizzontale o in verticale.
   Rilasciandolo dentro la forma torna all'aggancio automatico (anche con *Aggancio › Automatico* nel pannello).
 
 Altro: tavolozza di forme e icone di rete (router, switch, Catalyst/switch L3, firewall, server, datacenter, PC, portatile, AP, modem, stampante, telefono).
+Nella sezione espandibile *Casa e intrattenimento*: Fire TV, console, luce Hue, colonnina di ricarica EV, Echo, soundbar.
 Scrivendo *router, switch, catalyst, firewall, server, datacenter, modem, pc, AP, internet, database*… la forma diventa l'icona corrispondente.
+Vale anche per *TV / Fire TV, console / PS5 / Xbox, luce / Hue, EV / colonnina / wallbox, Echo / Alexa, soundbar*.
 Modalità **Auto**: forme e linee vengono elaborate da sole dopo una pausa. Menu **Esempi** per provare subito.
 
 ## Cosa riconosce
