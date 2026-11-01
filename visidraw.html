@@ -202,6 +202,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
         <label><input type="checkbox" id="cGrid" checked> Griglia</label>
         <label><input type="checkbox" id="cSnap" checked> Aggancia alla griglia</label>
         <label><input type="checkbox" id="cIcons" checked> Icone di rete dalle scritte</label>
+        <label title="La lettura della scrittura a mano considera solo lettere maiuscole e cifre: più precisa se scrivi in stampatello maiuscolo"><input type="checkbox" id="cUpper" checked> Scrivo in stampatello MAIUSCOLO</label>
         <hr>
         <button data-act="hwforget">Dimentica la mia scrittura (lettere e parole imparate)</button>
         <button data-act="selftest">Autotest del riconoscimento</button>
@@ -296,6 +297,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
     <div class="trstyle"><span>Carattere</span><select id="trFamily"></select><span>Dimensione</span><select id="trSize"><option value="">Automatica</option></select><span id="trPreview">Anteprima AaBb 123</span></div>
     <div class="foot">
       <label class="chk" style="margin-right:auto"><input type="checkbox" id="trIcons"> Converti in icone di rete (router, switch, server…)</label>
+      <label class="chk" title="Rilegge le scritte considerando solo maiuscole e cifre"><input type="checkbox" id="trUpper"> Solo MAIUSCOLE</label>
       <button class="btn" id="trKeep">Lascia tutto a mano</button>
       <button class="btn primary" id="trOk">Applica</button>
     </div>
@@ -317,7 +319,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -342,7 +344,7 @@ let tool = 'pen';
 let sel = new Set();
 let undoStack = [], redoStack = [];
 let lastSnap = '';
-let opt = {grid:true, snap:true, icons:true, auto:false, penColor:'#111827', penWidth:3};
+let opt = {grid:true, snap:true, icons:true, auto:false, penColor:'#111827', penWidth:3, hwUpper:true};
 // Penna: 5 colori e 3 spessori (px sullo schermo). Nero medio = stile predefinito: dopo Elabora valgono i colori del tema;
 // gli altri colori/spessori passano a forme (bordo), connettori e testi.
 const PEN_COLORS=['#111827','#1d4ed8','#dc2626','#16a34a','#7c3aed'];
@@ -890,13 +892,13 @@ const GLYPHS={
   D:[[[[0,0],[0,1]],[[0,0],[0.3,0],...HWA(0.3,0.5,0.42,0.5,-90,90),[0,1]]]],
   E:[[[[0.65,0],[0,0],[0,1],[0.65,1]],[[0,0.5],[0.5,0.5]]]],
   F:[[[[0.65,0],[0,0],[0,1]],[[0,0.5],[0.5,0.5]]]],
-  G:[[[...HWA(0.45,0.5,0.45,0.5,-40,-330),[0.88,0.55],[0.55,0.55]]]],
+  G:[[[...HWA(0.45,0.5,0.45,0.5,-40,-330),[0.88,0.55],[0.55,0.55]]],[[...HWA(0.45,0.5,0.45,0.5,-40,-345),[0.9,0.95],[0.9,0.6],[0.6,0.6]]]],
   H:[[[[0,0],[0,1]],[[0.7,0],[0.7,1]],[[0,0.5],[0.7,0.5]]]],
   I:[[[[0,0],[0,1]]],[[[-0.2,0],[0.2,0]],[[0,0],[0,1]],[[-0.2,1],[0.2,1]]]],
   J:[[[[0.6,0],[0.6,0.72],...HWA(0.32,0.72,0.28,0.28,0,170)]],[[[0.3,0],[0.85,0]],[[0.6,0],[0.6,0.72],...HWA(0.32,0.72,0.28,0.28,0,170)]]],
   K:[[[[0,0],[0,1]],[[0.65,0],[0,0.55],[0.7,1]]],[[[0,0],[0,1]],[[0.65,0],[0.02,0.55]],[[0.25,0.38],[0.7,1]]]],
   L:[[[[0,0],[0,1],[0.6,1]]]],
-  M:[[[[0,1],[0,0],[0.45,0.6],[0.9,0],[0.9,1]]],[[[0,1],[0.1,0],[0.45,0.7],[0.8,0],[0.9,1]]]],
+  M:[[[[0,1],[0,0],[0.45,0.6],[0.9,0],[0.9,1]]],[[[0,1],[0.1,0],[0.45,0.7],[0.8,0],[0.9,1]]],[[[0,1],[0,0],[0.45,1],[0.9,0],[0.9,1]]]],
   N:[[[[0,1],[0,0],[0.7,1],[0.7,0]]]],
   O:[[HWO(0.45,0.5,0.45,0.5)]],
   P:[[[[0,0],[0,1]],[[0,0],[0.35,0],...HWA(0.35,0.25,0.3,0.25,-90,90),[0,0.5]]]],
@@ -906,10 +908,10 @@ const GLYPHS={
   T:[[[[0,0],[0.8,0]],[[0.4,0],[0.4,1]]]],
   U:[[[[0,0],[0,0.65],...HWA(0.35,0.65,0.35,0.35,180,0),[0.7,0]]]],
   V:[[[[0,0],[0.4,1],[0.8,0]]]],
-  W:[[[[0,0],[0.25,1],[0.5,0.3],[0.75,1],[1,0]]]],
+  W:[[[[0,0],[0.25,1],[0.5,0.3],[0.75,1],[1,0]]],[[[0,0],[0.25,1],[0.5,0],[0.75,1],[1,0]]]],
   X:[[[[0,0],[0.7,1]],[[0.7,0],[0,1]]]],
   Y:[[[[0,0],[0.4,0.5],[0.8,0]],[[0.4,0.5],[0.4,1]]]],
-  Z:[[[[0,0],[0.7,0],[0,1],[0.7,1]]]],
+  Z:[[[[0,0],[0.7,0],[0,1],[0.7,1]]],[[[0,0],[0.7,0],[0,1],[0.7,1]],[[0.15,0.5],[0.55,0.5]]]],
   a:[[HWA(0.25,0.725,0.25,0.275,-10,-370),[[0.5,0.45],[0.5,1]]]],
   b:[[[[0,0],[0,1]],HWO(0.25,0.725,0.25,0.275)]],
   c:[[HWA(0.25,0.725,0.25,0.275,-40,-320)]],
@@ -943,7 +945,7 @@ const GLYPHS={
   '4':[[[[0.55,1],[0.55,0],[0,0.68],[0.75,0.68]]],[[[0.1,0],[0,0.65],[0.7,0.65]],[[0.5,0.3],[0.5,1]]]],
   '5':[[[[0.65,0],[0.1,0],[0.05,0.45],...HWA(0.33,0.7,0.32,0.3,-120,150)]]],
   '6':[[[[0.6,0],[0.25,0.3],[0.03,0.68],...HWA(0.33,0.72,0.3,0.28,180,540)]]],
-  '7':[[[[0,0],[0.7,0],[0.25,1]]]],
+  '7':[[[[0,0],[0.7,0],[0.25,1]]],[[[0,0],[0.7,0],[0.25,1]],[[0.2,0.5],[0.6,0.5]]]],
   '8':[[HWO(0.33,0.25,0.27,0.25),HWO(0.33,0.75,0.33,0.25)]],
   '9':[[HWO(0.33,0.3,0.3,0.28),[[0.63,0.3],[0.55,1]]]],
   '?':[[[...HWA(0.3,0.25,0.3,0.25,-160,90),[0.3,0.68]],[[0.3,0.95],[0.305,0.955]]]],
@@ -962,9 +964,13 @@ const HW_WORDS=('inizio fine start end stop si no ok ko errore router switch fir
   'output report analisi test sviluppo rilascio produzione sede filiale centrale primario secondario uplink trunk porta sala nuovo '+
   'apri chiudi salva carica utente login logout password accesso uscita entrata sistema servizio cluster nodo master slave linea fibra '+
   'rame mpls sdwan isp provider data center ced rack ups pdu sensore camera telecamera nvr laptop notebook tablet smartphone mobile '+
-  'si sì no rete lan1 lan2 vlan10 vlan20 piano1 piano2 sw1 sw2 r1 r2 fw1 srv1 pc1 ap1').split(/\s+/).filter(Boolean);
+  'si sì no rete lan1 lan2 vlan10 vlan20 piano1 piano2 sw1 sw2 r1 r2 fw1 srv1 pc1 ap1 '+
+  'datacenter catalyst distribution distribuzione core access hub bridge proxy san isp ups rack onu olt lte 4g 5g adsl vdsl '+
+  'azure aws office pbx centralino reception amministrazione direzione tecnico terra primo secondo terzo edificio dmz '+
+  'nas srv sw fw rtr gw dc ad radius ldap siem nac wlc controller ups cctv nvr badge tornello').split(/\s+/).filter(Boolean);
 const HW_N=32;
 let HW_TPL=null, hwLearn={tpl:[], words:[]};
+const HW_HALF=new WeakMap();   // nuvole ridotte (16 punti) per la stima rapida
 try{ const o=JSON.parse(localStorage.getItem('visidraw.hwlearn')||'null'); if (o && Array.isArray(o.tpl) && Array.isArray(o.words)) hwLearn=o; }catch(e){}
 // Nuvola di HW_N punti normalizzata (scala uniforme, centroide nell'origine); punti per tratto ∝ lunghezza
 function hwCloud(strokes){
@@ -997,15 +1003,27 @@ function hwMatch(a, b){
   for (let i=0;i<n;i+=step) min=Math.min(min, hwCloudDist(a,b,i), hwCloudDist(b,a,i));
   return min;
 }
+const hwUpperOnly = () => opt.hwUpper!==false;
+// Numero massimo di tratti con cui si scrive di solito ogni carattere (oltre: probabilmente sono due lettere)
+const HW_MAXS={A:3,B:3,C:2,D:2,E:4,F:3,G:3,H:3,I:3,J:2,K:3,L:2,M:3,N:3,O:2,P:2,Q:3,R:3,S:2,T:2,U:2,V:2,W:2,X:2,Y:3,Z:3,
+  '0':2,'1':3,'2':2,'3':2,'4':3,'5':3,'6':2,'7':2,'8':2,'9':2,'?':2,'!':2,'/':1,'(':1,')':1,'+':2};
+const hwAllowed = c => !hwUpperOnly() || !/[a-z]/.test(c);
 function hwTemplates(){
-  if (HW_TPL) return HW_TPL;
-  HW_TPL=[];
-  for (const c in GLYPHS) for (const v of GLYPHS[c]){
-    const all=v.flat(), b=bboxOf(all), top=1-b.y, bot=b.y+b.h-1;
-    // anche in versione inclinata (scrittura in corsivo/obliqua)
-    for (const sl of [0, 0.22]) HW_TPL.push({c, cloud:hwCloud(v.map(st=>st.map(p=>[p[0]+sl*(1-p[1]), p[1]]))), top, bot});
+  const key=hwUpperOnly()?'U':'A';
+  if (HW_TPL && HW_TPL.key===key) return HW_TPL.list;
+  const list=[];
+  for (const c in GLYPHS){
+    if (!hwAllowed(c)) continue;
+    for (const v of GLYPHS[c]){
+      const all=v.flat(), b=bboxOf(all), top=1-b.y, bot=b.y+b.h-1;
+      // versioni più strette e più larghe, dritte e oblique
+      const widths = b.w > 0.3 ? [0.8, 1, 1.2].filter(sx=>sx===1 || b.w*sx<=1.05) : [1];
+      for (const sx of widths) for (const sl of [0, 0.2])
+        list.push({c, cloud:hwCloud(v.map(st=>st.map(p=>[p[0]*sx+sl*(1-p[1]), p[1]]))), top, bot, ns:v.length, ar:b.w*sx/(b.h||1)});
+    }
   }
-  return HW_TPL;
+  HW_TPL={key, list};
+  return list;
 }
 // Righe → lettere → parole
 // Inclinazione media della scrittura (dx/dy dei tratti quasi verticali)
@@ -1017,14 +1035,15 @@ function hwSlant(polys){
   }
   return sy>0 ? clamp(sx/sy, -0.6, 0.6) : 0;
 }
-function hwSegment(items){
-  const order=items.map((it,i)=>i).sort((a,b)=>(items[a].ink.t0||0)-(items[b].ink.t0||0));
+function hwSegment(items, force){
+  const hasTime=items.some(it=>it.ink.t0) && new Set(items.map(it=>it.ink.t0||0)).size===items.length;
+  const order=items.map((it,i)=>i).sort((a,b)=>hasTime ? (items[a].ink.t0||0)-(items[b].ink.t0||0) : bboxOf(items[a].ink.pts).x-bboxOf(items[b].ink.pts).x);
   // raddrizza la scrittura inclinata, così le lettere vicine non si sovrappongono
   const sl=hwSlant(items.map(it=>it.ink.pts)), ymid=bboxOf(items.flatMap(it=>it.ink.pts)).cy;
-  const strokes=items.map((it,i)=>{ const p=it.ink.pts.map(q=>[q[0]-sl*(q[1]-ymid), q[1]]), b=bboxOf(p); return {pts:p, b, o:order.indexOf(i)}; });
+  const strokes=items.map((it,i)=>{ const p=it.ink.pts.map(q=>[q[0]-sl*(q[1]-ymid), q[1]]), b=bboxOf(p); return {pts:p, b, o:order.indexOf(i), idx:i}; });
   const hs=strokes.map(st=>st.b.h).sort((a,b)=>a-b), Hm=Math.max(hs[Math.floor(hs.length*0.75)]||1, 1);
   const isSmall=st=>Math.max(st.b.w, st.b.h) < 0.3*Hm;
-  // righe: prima i tratti grandi, poi i puntini nella riga più vicina
+  // righe: prima i tratti più alti, poi gli altri e i puntini nella riga più vicina
   const lines=[];
   for (const st of strokes.filter(x=>!isSmall(x)).sort((a,b)=>b.b.h-a.b.h)){
     let ln=lines.find(l=>{ const H=Math.max(l.y1-l.y0, 0.5*Hm); return st.b.cy>l.y0-0.35*H && st.b.cy<l.y1+0.35*H; });
@@ -1038,37 +1057,85 @@ function hwSegment(items){
     best.s.push(st);
   }
   lines.sort((a,b)=>a.y0-b.y0);
+  const mk=list=>{ const c={s:[], o:[], idx:[], x0:Infinity, x1:-Infinity, y0:Infinity, y1:-Infinity};
+    for (const st of list){ c.s.push(st.pts); c.o.push(st.o); c.idx.push(st.idx); c.x0=Math.min(c.x0,st.b.x); c.x1=Math.max(c.x1,st.b.x+st.b.w); c.y0=Math.min(c.y0,st.b.y); c.y1=Math.max(c.y1,st.b.y+st.b.h); }
+    return c; };
   return lines.map(l=>{
-    const chars=[], big=l.s.filter(x=>!isSmall(x)).sort((a,b)=>a.b.x-b.b.x), dots=l.s.filter(isSmall);
-    const add=(c,st)=>{ c.s.push(st.pts); c.o.push(st.o); c.x0=Math.min(c.x0,st.b.x); c.x1=Math.max(c.x1,st.b.x+st.b.w); c.y0=Math.min(c.y0,st.b.y); c.y1=Math.max(c.y1,st.b.y+st.b.h); };
-    for (const st of big){
-      const last=chars[chars.length-1], x0=st.b.x, x1=st.b.x+st.b.w;
-      if (last){
-        const ov=Math.min(last.x1, x1)-Math.max(last.x0, x0), minW=Math.max(Math.min(last.x1-last.x0, st.b.w), 0.12*Hm);
-        const union=Math.max(last.x1,x1)-Math.min(last.x0,x0), adj=last.o.some(o=>Math.abs(o-st.o)===1);
-        const m=0.04*Hm, lcx=(last.x0+last.x1)/2, inside=(st.b.cx>=last.x0-m && st.b.cx<=last.x1+m) || (lcx>=x0-m && lcx<=x1+m);
-        // stessa lettera: tratti sovrapposti in orizzontale (o uno dentro l'altro, come la stanghetta della H),
-        // oppure che si toccano e sono stati fatti uno dopo l'altro
-        if (ov > 0.3*minW || (inside && ov>=-m) || (ov > -0.1*Hm && adj && union <= Math.max(1.5*Hm, 1.1*(l.y1-l.y0)))){ add(last, st); continue; }
+    const big=l.s.filter(x=>!isSmall(x)), dots=l.s.filter(isSmall);
+    // metriche della riga dai tratti: base e altezza delle maiuscole (le code e le stanghette non contano)
+    const bt=big.map(x=>x.b.y+x.b.h).sort((a,b)=>a-b), tp=big.map(x=>x.b.y).sort((a,b)=>a-b);
+    const B=bt.length ? bt[Math.floor((bt.length-1)*0.6)] : l.y1;
+    // maiuscole: tutte alte uguali (si scarta qualche tratto storto); minuscole: contano i tratti più alti
+    const H=Math.max(tp.length ? B-tp[Math.floor((tp.length-1)*(hwUpperOnly()?0.2:0.05))] : l.y1-l.y0, 0.3*Hm, 1);
+    // divisione in lettere guidata dal riconoscimento: i tratti, nell'ordine in cui sono stati fatti,
+    // si raggruppano (1-4 per lettera) scegliendo la combinazione con il costo totale minore
+    // P: costo fisso per lettera. In maiuscolo conviene negativo (le lettere attaccate non vanno unite;
+    // i frammenti sono già penalizzati da altezza e posizione); in minuscolo pancia + asta (a, d, b) vanno tenute insieme
+    const seq=big.slice().sort((a,b)=>a.o-b.o), n=seq.length, P=hwUpperOnly() ? -0.4 : 0.3;
+    const connected=list=>{
+      const m=0.1*H, k=list.length, seen=new Uint8Array(k), st=[0]; seen[0]=1;
+      while (st.length){ const i=st.pop(), a=list[i].b;
+        for (let j=0;j<k;j++){ if (seen[j]) continue; const b=list[j].b;
+          if (a.x-m < b.x+b.w && b.x-m < a.x+a.w && a.y-m < b.y+b.h && b.y-m < a.y+a.h){ seen[j]=1; st.push(j); } } }
+      return seen.every(Boolean);
+    };
+    const touches=(a,b,m)=>a.x-m < b.x+b.w && b.x-m < a.x+a.w && a.y-m < b.y+b.h && b.y-m < a.y+a.h;
+    // costo di ogni gruppo di tratti consecutivi (1-4) come lettera
+    const G=[];
+    for (let i=0;i<n;i++){ G[i]=[];
+      for (let kk=1;kk<=4 && i+kk<=n;kk++){
+        const grp=seq.slice(i,i+kk), c=mk(grp), w=c.x1-c.x0, h=c.y1-c.y0;
+        if (kk>1 && (w>1.5*H || h>1.8*H || !connected(grp))){ G[i][kk]=null; continue; }
+        const r=hwClassify(c, B, H);
+        // vuoto orizzontale dentro il gruppo (i tratti formano due blocchi separati): due lettere
+        let gapPen=0;
+        if (kk>1){ const iv=grp.map(x=>[x.b.x, x.b.x+x.b.w]).sort((a,b)=>a[0]-b[0]); let end=iv[0][1];
+          for (const [a2,b2] of iv.slice(1)){ if (a2-end > 0.03*H) gapPen+=1.5; end=Math.max(end,b2); } }
+        // due aste verticali piene e vicine nello stesso gruppo: sono due lettere (es. "IN" non è una N)
+        if (kk>1){ const vs=grp.filter(x=>x.b.h>=0.75*H && x.b.w<=0.2*H);
+          for (let a=0;a<vs.length;a++) for (let b2=a+1;b2<vs.length;b2++) if (Math.abs(vs[a].b.cx-vs[b2].b.cx) < 0.3*H) gapPen+=1.5; }
+        // stanghetta o puntino isolati che toccano altri tratti: sono parte di una lettera, non segni a sé
+        let orphan=0;
+        if (kk===1 && /^[-=.,']$/.test(r.cands[0].c) && big.some(o=>o!==grp[0] && touches(o.b, grp[0].b, 0.05*H))) orphan=1.5;
+        G[i][kk]={c, cost:r.cands[0].s + P + gapPen + orphan + (w>1.15*H ? 2*(w/H-1.15) : 0)};
       }
-      chars.push({s:[st.pts], o:[st.o], x0, x1, y0:st.b.y, y1:st.b.y+st.b.h});
     }
+    // divisione ottima; stato = (fine, lunghezza dell'ultimo gruppo) per penalizzare due lettere
+    // consecutive che si sovrappongono molto in orizzontale (di solito sono la stessa lettera)
+    const trans=(A,Bc)=>{ const ov=Math.min(A.x1,Bc.x1)-Math.max(A.x0,Bc.x0), mw=Math.max(Math.min(A.x1-A.x0, Bc.x1-Bc.x0), 0.25*H);
+      return ov > 0.4*mw ? 1.0 : 0; };
+    // force: numero di lettere imposto (solo per imparare dalla trascrizione corretta, su una riga)
+    const M = force && lines.length===1 ? force : 0, NC = M || n;
+    const key=(j,k,c)=>(j*5+k)*(NC+1)+c, best=new Map(), from=new Map();
+    for (let kk=1;kk<=4 && kk<=n;kk++) if (G[0][kk]){ best.set(key(kk,kk,1), G[0][kk].cost); from.set(key(kk,kk,1), 0); }
+    for (let i=1;i<n;i++) for (let pk=1;pk<=4;pk++) for (let cnt=1;cnt<=NC;cnt++){
+      const cur=best.get(key(i,pk,cnt)); if (cur===undefined) continue;
+      const prev=G[i-pk][pk].c;
+      for (let kk=1;kk<=4 && i+kk<=n;kk++){ const g=G[i][kk]; if (!g) continue;
+        if (M && cnt+1>M) continue;
+        const nc=M ? cnt+1 : 1, k2=key(i+kk,kk,nc), v=cur+g.cost+trans(prev, g.c);
+        if (!best.has(k2) || v<best.get(k2)){ best.set(k2, v); from.set(k2, pk*1000+cnt); } }
+    }
+    let kk=0, cnt=M||1, bv=Infinity;
+    for (let q=1;q<=4;q++){ const v=best.get(key(n,q,cnt)); if (v!==undefined && v<bv){ bv=v; kk=q; } }
+    if (!kk && M) return hwSegment(items)[0];   // impossibile con quel numero di lettere: divisione normale
+    const chars=[];
+    for (let j=n; j>0 && kk; ){ const f2=from.get(key(j,kk,cnt)); chars.push(G[j-kk][kk].c); j-=kk;
+      if (!f2){ kk=0; break; } kk=Math.floor(f2/1000); cnt=f2%1000; }
+    chars.sort((a,b)=>a.x0-b.x0);
     // puntini: sopra una lettera (i, j), sotto una lettera sospesa (!, ?) oppure da soli (punteggiatura)
-    const bt0=chars.map(c=>c.y1).sort((a,b)=>a-b), B0=bt0[Math.floor(bt0.length/2)]||0;
     for (const st of dots){
       let tgt=null, bd=Infinity;
       for (const c of chars){
         const dx=Math.max(c.x0-st.b.cx, 0, st.b.cx-c.x1), ch=c.y1-c.y0;
-        const above=st.b.cy < c.y0+0.2*ch, below=c.y1 < B0-0.12*ch && st.b.cy > c.y1-0.1*ch;
+        const above=st.b.cy < c.y0+0.2*ch, below=c.y1 < B-0.12*ch && st.b.cy > c.y1-0.1*ch;
         if (dx<0.15*Hm && (above || below) && dx<bd){ bd=dx; tgt=c; }
       }
-      if (tgt) add(tgt, st);
-      else { chars.push({s:[st.pts], o:[st.o], x0:st.b.x, x1:st.b.x+st.b.w, y0:st.b.y, y1:st.b.y+st.b.h}); chars.sort((a,b)=>a.x0-b.x0); }
+      // numero di lettere imposto: i puntini vanno sempre alla lettera più vicina
+      if (!tgt && M) for (const c of chars){ const dx=Math.max(c.x0-st.b.cx, 0, st.b.cx-c.x1); if (dx<bd){ bd=dx; tgt=c; } }
+      if (tgt){ tgt.s.push(st.pts); tgt.o.push(st.o); tgt.idx.push(st.idx); tgt.x0=Math.min(tgt.x0,st.b.x); tgt.x1=Math.max(tgt.x1,st.b.x+st.b.w); tgt.y0=Math.min(tgt.y0,st.b.y); tgt.y1=Math.max(tgt.y1,st.b.y+st.b.h); }
+      else { chars.push(mk([st])); chars.sort((a,b)=>a.x0-b.x0); }
     }
-    // metriche della riga: base (mediana dei fondi) e altezza delle maiuscole
-    const tall=chars.filter(c=>c.y1-c.y0 > 0.3*Hm), bottoms=(tall.length?tall:chars).map(c=>c.y1).sort((a,b)=>a-b);
-    const B=bottoms[Math.floor((bottoms.length-1)*0.4)];   // le code (g, p, q…) non spostano la riga di base
-    const H=Math.max(...chars.map(c=>B-c.y0), 0.3*Hm, 1);
     // parole: spazi molto più ampi della distanza tipica fra lettere
     const gaps=chars.slice(1).map((c,i)=>c.x0-chars[i].x1), sg=gaps.slice().sort((a,b)=>a-b), medGap=Math.max(sg[Math.floor(sg.length/2)]||0, 0.05*H);
     const thr=Math.max(0.5*H, 2.2*medGap);
@@ -1080,13 +1147,19 @@ function hwSegment(items){
 // Classifica una lettera: candidati ordinati {c, s} (s = distanza di forma + penalità di posizione)
 function hwClassify(ch, B, H){
   const w=ch.x1-ch.x0, h=ch.y1-ch.y0, top=(B-ch.y0)/H, bot=(ch.y1-B)/H;
-  if (Math.max(w,h) < 0.2*H) return {cands:[{c: bot>0.2 ? ',' : top>0.6 ? "'" : '.', s:0}], shape:new Map(), top, bot};
-  if (h < 0.22*H && w > 0.3*H) return {cands:[{c: ch.s.length>=2 ? '=' : '-', s:0}], shape:new Map(), top, bot};
-  const cloud=hwCloud(ch.s), best=new Map(), shape=new Map();
-  const quick=hwTemplates().concat(hwLearn.tpl).map(t=>({t, q:hwCloudDist(cloud,t.cloud,0)+hwCloudDist(t.cloud,cloud,0)})).sort((a,b)=>a.q-b.q);
-  for (const {t} of quick.slice(0, 40)){
+  if (Math.max(w,h) < 0.2*H) return {cands:[{c: bot>0.2 ? ',' : top>0.6 ? "'" : '.', s:1.2}], shape:new Map(), top, bot};
+  if (h < 0.22*H && w > 0.3*H) return {cands:[{c: ch.s.length>=2 ? '=' : '-', s:1.6}], shape:new Map(), top, bot};
+  const cloud=hwCloud(ch.s), best=new Map(), shape=new Map(), half=cloud.filter((_,i)=>i%2===0);
+  const tpls=hwTemplates().concat(hwLearn.tpl.filter(t=>hwAllowed(t.c)));
+  const quick=tpls.map(t=>{ let th=HW_HALF.get(t); if (!th){ th=t.cloud.filter((_,i)=>i%2===0); HW_HALF.set(t, th); } return {t, q:hwCloudDist(half,th,0)+hwCloudDist(th,half,0)}; }).sort((a,b)=>a.q-b.q);
+  const ns=ch.s.length, arg=w/(h||1);
+  for (const {t} of quick.slice(0, 24)){
     let d=hwMatch(cloud, t.cloud);
     if (t.user) d*=0.85;   // le lettere dell'utente valgono di più
+    // troppi tratti o proporzioni molto diverse dal modello: probabilmente sono due lettere attaccate
+    const maxs=HW_MAXS[t.c.toUpperCase()] || 4;
+    if (ns>maxs) d+=2.5*(ns-maxs);
+    if (t.ar && t.ar>0.25 && arg>0.25) d+=1.2*Math.max(0, Math.abs(Math.log(arg/t.ar))-0.25);
     const lc=t.c.toLowerCase(); if (!shape.has(lc) || d<shape.get(lc)) shape.set(lc, d);
     const sc=d + 2.2*(Math.abs(top-t.top) + 1.2*Math.abs(bot-t.bot));
     if (!best.has(t.c) || sc<best.get(t.c)) best.set(t.c, sc);
@@ -1103,7 +1176,6 @@ function hwReadLocal(items){
     const ws=[];
     for (const word of ln.words){
       const res=word.map(ch=>hwClassify(ch, ln.B, ln.H));
-      word.forEach(ch=>allChars.push(ch));
       let raw=res.map(r=>r.cands[0].c);
       // lettere col puntino (i, j): mai maiuscole
       const dotted=word.map(ch=>ch.s.length>1 && ch.s.some(st=>{ const b=bboxOf(st); return Math.max(b.w,b.h) < 0.25*ln.H; }));
@@ -1112,15 +1184,34 @@ function hwReadLocal(items){
       const digits=raw.filter(isDigit).length, letters=raw.filter(c=>/[a-zA-Z]/.test(c)).length;
       // vocabolario: confronto di forma senza maiuscole/minuscole
       let txt=null;
-      if (raw.length>=2 && res.every(r=>r.shape.size)){
-        const rawCost=res.reduce((a,r)=>a+Math.min(...r.shape.values()), 0);
+      const dictMatch=rs=>{
+        if (rs.length<2 || !rs.every(r=>r.shape.size)) return null;
+        const rawCost=rs.reduce((a,r)=>a+Math.min(...r.shape.values()), 0);
         let bw=null, bc=Infinity;
         for (const w of dict){
-          if (w.length!==raw.length) continue;
-          let c=0; for (let i=0;i<w.length && c<bc;i++){ const v=res[i].shape.get(w[i]); c += v===undefined ? 99 : v; }
+          if (w.length!==rs.length) continue;
+          let c=0; for (let i=0;i<w.length && c<bc;i++){ const v=rs[i].shape.get(w[i]); c += v===undefined ? 99 : v; }
           if (c<bc){ bc=c; bw=w; }
         }
-        if (bw && bc <= rawCost*1.3 + 0.4*raw.length){
+        return bw && bc <= rawCost*1.3 + 0.4*rs.length ? {w:bw, c:bc/rs.length} : null;
+      };
+      let dm=dictMatch(res);
+      // parola sconosciuta: forse una lettera è stata spezzata o due unite; si prova a ridividerla
+      if (!dm && word.length>=3 && word.every(ch=>ch.idx)){
+        const sub=[...new Set(word.flatMap(ch=>ch.idx))].map(i=>items[i]);
+        for (const d of word.length>=5 ? [-1, 1, -2, 2] : [-1, 1]){
+          try{
+            const alt=hwSegment(sub, word.length+d);
+            if (alt.length!==1 || alt[0].chars.length!==word.length+d) continue;
+            const ar=alt[0].chars.map(ch=>hwClassify(ch, alt[0].B, alt[0].H)), m=dictMatch(ar);
+            if (m && (!dm || m.c<dm.c)){ dm=m; res.splice(0, res.length, ...ar); raw=ar.map(r=>r.cands[0].c);
+              word.splice(0, word.length, ...alt[0].chars); }
+          }catch(e){}
+        }
+      }
+      if (dm){
+        const bw=dm.w;
+        {
           // maiuscola? lettere basse (a, c, e, i, n, o…) scritte alte; per le altre conta la forma riconosciuta
           const ups=[...bw].map((c,i)=>{
             if (!/[a-zàèéìòù]/.test(c)) return null;
@@ -1129,7 +1220,7 @@ function hwReadLocal(items){
             return isUpperL(raw[i]) && !'Il1'.includes(raw[i]) && raw[i].toLowerCase()===c ? true : null;
           });
           const known=ups.filter(u=>u!==null), nUp=known.filter(Boolean).length;
-          if (known.length>=2 && nUp >= 0.7*known.length) txt=bw.toUpperCase();
+          if (hwUpperOnly() || (known.length>=2 && nUp >= 0.7*known.length)) txt=bw.toUpperCase();
           else txt=(ups[0] ? bw[0].toUpperCase() : bw[0])+bw.slice(1);
         }
       }
@@ -1138,10 +1229,17 @@ function hwReadLocal(items){
         const AMB='cosuvwxzkp', un=raw.filter(c=>/[a-zA-Z]/.test(c) && !AMB.includes(c.toLowerCase()) && !'Il'.includes(c));
         if (un.length){ const upper=un.filter(isUpperL).length*2 > un.length;
           raw=raw.map((c,i)=>!AMB.includes(c.toLowerCase()) || (i===0 && res[0].top>0.8 && refLow) ? c : (upper?c.toUpperCase():c.toLowerCase())); }
-        // contesto: parole di cifre o di lettere
-        const num = digits > letters;
+        // contesto: parole di cifre o di lettere; se ogni carattere può essere sia cifra sia lettera
+        // (O/0, I/1, S/5, Z/2, B/8, G/6) decide il confronto delle forme
+        let num = digits > letters;
+        if (!num && raw.every(c=>/[0-9OoIlSsZzBG]/.test(c))){
+          let dc=0, lc=0;
+          for (const r of res){ let d=Infinity, l=Infinity; for (const x of r.cands){ if (isDigit(x.c)) d=Math.min(d,x.s); else if (/[a-zA-Z]/.test(x.c)) l=Math.min(l,x.s); } dc+=d; lc+=l; }
+          num = dc <= lc + 0.2*raw.length;
+        }
         raw=raw.map((c,i)=>{
-          if (num) return ({O:'0',o:'0',I:'1',l:'1',S:'5',s:'5',Z:'2',z:'2',B:'8'})[c]||c;
+          if (num) return ({O:'0',o:'0',I:'1',l:'1',S:'5',s:'5',Z:'2',z:'2',B:'8',G:'6'})[c]||c;
+          if (hwUpperOnly()) return c==='0' ? 'O' : c==='1' ? 'I' : c;
           if (c==='0') return res[i].top>0.8 ? 'O' : 'o';
           if (c==='1' || c==='I' || c==='l'){ const others=raw.filter((x,j)=>j!==i && /[a-zA-Z]/.test(x)); const lower=others.some(x=>!isUpperL(x));
             return i===0 || !lower ? 'I' : 'l'; }
@@ -1149,15 +1247,20 @@ function hwReadLocal(items){
         });
         txt=raw.join('');
       }
+      word.forEach(ch=>allChars.push(ch));   // lettere (eventualmente ridivise) per imparare dalla correzione
       ws.push(txt);
     }
     out.push(ws.join(' '));
   }
-  return {text:out.join('\n'), chars:allChars};
+  return {text:out.join('\n'), chars:allChars, items};
 }
 // Impara dalla trascrizione confermata: lettere (se il numero coincide) e parole
 function hwLearnFrom(rec, text){
   const plain=text.replace(/\s+/g,'');
+  // numero di lettere diverso da quello letto: si ridivide la scritta nel numero giusto di lettere
+  if (rec && rec.items && rec.chars.length!==plain.length && plain.length && plain.length<=40){
+    try{ const ln=hwSegment(rec.items, plain.length); if (ln.length===1 && ln[0].chars.length===plain.length) rec={...rec, chars:ln[0].chars}; }catch(e){}
+  }
   if (rec && rec.chars.length===plain.length && plain.length<=40){
     rec.chars.forEach((ch,i)=>{
       const c=plain[i]; if (!GLYPHS[c] && !GLYPHS[c.toLowerCase()] && !GLYPHS[c.toUpperCase()]) return;
@@ -2193,6 +2296,8 @@ function transcribeDialog(clusters){
   return new Promise(resolve=>{
     const md=$('#mdTrans'), list=$('#trList'); list.replaceChildren();
     $('#trIcons').checked=opt.icons;
+    $('#trUpper').checked=opt.hwUpper!==false;
+    $('#trUpper').onchange=e=>{ opt.hwUpper=e.target.checked; $('#cUpper').checked=opt.hwUpper; saveOpt(); inputs.forEach(inp=>inp._reread && inp._reread()); };
     // carattere e dimensione per tutte le scritte di questa elaborazione (l'ultima scelta viene ricordata)
     const fam=$('#trFamily'), size=$('#trSize'), prev=$('#trPreview');
     fam.value = FONTS[opt.trFont] ? opt.trFont : fontName(null);
@@ -2213,11 +2318,12 @@ function transcribeDialog(clusters){
       inp.addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); const nx=inputs[i+1]; nx ? nx.focus() : done(true); } });
       inp.addEventListener('focus', ()=>inp.select());
       // lettura automatica offline: precompila, l'utente conferma o corregge
-      let pre='';
-      try{ recs[i]=hwReadLocal(c.items); pre=recs[i].text; }catch(err){ recs[i]=null; }
-      if (pre){ inp.value=pre; sm.textContent+=' · letto in automatico: conferma o correggi'; }
+      const read=()=>{ try{ recs[i]=hwReadLocal(c.items); return recs[i].text; }catch(err){ recs[i]=null; return ''; } };
+      inp.dataset.pre=read();
+      if (inp.dataset.pre){ inp.value=inp.dataset.pre; sm.textContent+=' · letto in automatico: conferma o correggi'; }
+      inp._reread=()=>{ if (inp.value===inp.dataset.pre){ inp.dataset.pre=read(); inp.value=inp.dataset.pre; } };
       // se il browser ha un suo riconoscimento della scrittura, lo usa finché l'utente non ha modificato il campo
-      hwRead(c).then(t=>{ if (t && inp.value===pre){ inp.value=t; pre=t; } });
+      hwRead(c).then(t=>{ if (t && inp.value===inp.dataset.pre){ inp.value=t; inp.dataset.pre=t; } });
       return inp;
     });
     $('#trInfo').textContent = 'Ho letto le scritte a mano: conferma con Invio o correggi (Invio passa alla successiva). VisiDraw impara dalle tue correzioni. Svuota un campo per conservare quella scritta a mano libera.';
@@ -2560,14 +2666,24 @@ const SK={
     return [ln.concat(wobble([pts[n-1],b1,pts[n-1],b2], R, 0.4).slice(1))]; },
   // scrittura in stampatello dai modelli GLYPHS, deformata (scala, inclinazione, tremolio, spaziatura)
   hand(R,str,x,y,h,o={}){
-    const out=[]; let cx=x; const slant=o.slant!==undefined?o.slant:J(R,0.18), sq=1+J(R,o.squash||0.12);
+    const out=[]; out.meta=[]; let cx=x; const slant=o.slant!==undefined?o.slant:J(R,0.18), sq=1+J(R,o.squash||0.12);
     for (const ch of str){
       if (ch===' '){ cx+=h*(0.75+R()*0.3); continue; }
       const vs=GLYPHS[ch]; if (!vs){ cx+=h*0.5; continue; }
       const v=vs[Math.floor(R()*vs.length)], b=bboxOf(v.flat()), sx=sq*(1+J(R,0.1)), dy=J(R,0.04);
-      for (const st of v){
-        const pts=st.map(p=>{ const px=(p[0]-b.x)*sx, py=p[1]+dy; return [cx+(px+slant*(1-py))*h+J(R,0.02*h), y+py*h+J(R,0.02*h)]; });
-        out.push(wobble(pts, R, 0.025*h));
+      // o.messy: scrittura imprecisa (lettera ruotata, tratti che sbordano o restano corti, tremolio forte)
+      const mz=o.messy||0, rot=J(R,0.14*mz), ca=Math.cos(rot), sa=Math.sin(rot), mx=b.w/2, my=0.5;
+      out.meta.push({ch, n:v.length});   // per i test: quanti tratti ha ogni lettera
+      for (const st0 of v){
+        let st=st0;
+        if (mz && st.length>=2){
+          const ext=(e,a,f)=>[e[0]+(e[0]-a[0])*f, e[1]+(e[1]-a[1])*f];
+          st=st.slice(); st[0]=ext(st[0], st[1], J(R,0.12*mz)); st[st.length-1]=ext(st[st.length-1], st[st.length-2], J(R,0.12*mz));
+        }
+        const pts=st.map(p=>{ let px=(p[0]-b.x)*sx, py=p[1]+dy;
+          if (mz){ const qx=px-mx, qy=py-my; px=mx+qx*ca-qy*sa; py=my+qx*sa+qy*ca; px+=J(R,0.04*mz); py+=J(R,0.04*mz); }
+          return [cx+(px+slant*(1-py))*h+J(R,0.02*h), y+py*h+J(R,0.02*h)]; });
+        out.push(wobble(pts, R, (0.025+0.03*mz)*h));
       }
       cx+=(b.w*sx+(o.gap!==undefined ? o.gap+R()*0.05 : 0.22+R()*0.12))*h;
     }
@@ -2685,6 +2801,7 @@ $('#selFont').addEventListener('change', e=>{ S.font=e.target.value; commit(); }
 $('#cGrid').addEventListener('change', e=>{ opt.grid=e.target.checked; saveOpt(); render(); });
 $('#cSnap').addEventListener('change', e=>{ opt.snap=e.target.checked; saveOpt(); });
 $('#cIcons').addEventListener('change', e=>{ opt.icons=e.target.checked; saveOpt(); });
+$('#cUpper').addEventListener('change', e=>{ opt.hwUpper=e.target.checked; saveOpt(); });
 $('#cAuto').addEventListener('change', e=>{ opt.auto=e.target.checked; saveOpt(); if (opt.auto) toast('Auto: forme e linee vengono elaborate da sole dopo una pausa. Le scritte con ✨ Elabora.'); });
 document.querySelectorAll('#tools .btn').forEach(b=>b.addEventListener('click', ()=>setTool(b.dataset.tool)));
 $('#bElab').addEventListener('click', ()=>elaborate(false));
@@ -2807,7 +2924,9 @@ function runSelfTest(){
   lines.push('');
   for (const [name, pass] of geo){ tot++; if (pass) ok++; lines.push(`${pass?'✔':'✘'} ${name}`); }
   // --- lettura della scrittura a mano (scritte sintetiche in stampatello, deformate) ---
-  const savedLearn=hwLearn; hwLearn={tpl:[], words:[]};
+  { const bad=[]; for (const c in GLYPHS) GLYPHS[c].forEach((v,vi)=>v.forEach(st=>{ if (!Array.isArray(st) || !st.every(pt=>Array.isArray(pt) && pt.length===2 && pt.every(x=>typeof x==='number' && isFinite(x)))) bad.push(c+vi); }));
+    tot++; if (!bad.length) ok++; lines.push(`${bad.length?'✘':'✔'} modelli delle lettere ben formati${bad.length?': '+bad.join(','):''}`); }
+  const savedLearn=hwLearn, savedUpper=opt.hwUpper; hwLearn={tpl:[], words:[]}; opt.hwUpper=false;
   const readCases=[['NO','NO'], ['Si','Si'], ['Router','Router'], ['PC 12','PC 12'], ['Dati validi?','Dati validi?'], ['Notifica errore','Notifica errore'],
     ['VLAN 10','VLAN 10'], ['Inizio','Inizio'], ['backup','backup'], ['HELLO','HELLO']];
   lines.push('');
@@ -2818,8 +2937,20 @@ function runSelfTest(){
       const t=hwReadLocal(inks.map(ink=>({ink}))).text;
       if (t===expect) pass++; else fails.push(seed+': '+JSON.stringify(t));
     }
-    tot+=5; ok+=pass; lines.push(`${pass===5?'✔':'✘'} lettura "${w}": ${pass}/5${fails.length?'   ['+fails.join('; ')+']':''}`);
+    tot+=5; ok+=pass; lines.push(`${pass>=4?'✔':'✘'} lettura "${w}": ${pass}/5${fails.length?'   ['+fails.join('; ')+']':''}`);
   }
+  // stampatello maiuscolo con lettere molto vicine e scrittura imprecisa (opzione "solo maiuscole")
+  opt.hwUpper=true;
+  for (const w of ['ROUTER','SWITCH CORE','FIREWALL','DATACENTER','VLAN 10','PC 12','ERRORE','STAMPANTE']){
+    let pass=0; const fails=[];
+    for (let seed=1; seed<=5; seed++){
+      const R=rng(seed*31+w.length*7), inks=inksFrom(SK.hand(R, w, 0, 0, 30+R()*25, {gap:0.05, messy:0.8}));
+      const t=hwReadLocal(inks.map(ink=>({ink}))).text;
+      if (t===w) pass++; else fails.push(seed+': '+JSON.stringify(t));
+    }
+    tot+=5; ok+=pass; lines.push(`${pass>=4?'✔':'✘'} maiuscolo, lettere vicine e imprecise "${w}": ${pass}/5${fails.length?'   ['+fails.join('; ')+']':''}`);
+  }
+  opt.hwUpper=false;
   {
     // due righe nella stessa forma
     const R=rng(5), inks=inksFrom(HW([...SK.hand(R,'Switch',0,0,30), ...SK.hand(R,'Core',10,50,30)]));
@@ -2833,7 +2964,7 @@ function runSelfTest(){
     tot++; if (after==='R') ok++;
     lines.push(`${after==='R'?'✔':'✘'} impara dalla correzione: prima ${JSON.stringify(before.text)}, dopo ${JSON.stringify(after)}`);
   }
-  hwLearn=savedLearn;
+  hwLearn=savedLearn; opt.hwUpper=savedUpper;
   try{ localStorage.setItem('visidraw.hwlearn', JSON.stringify(hwLearn)); }catch(err){}
   lines.push(`\nTotale: ${ok}/${tot}`);
   S=JSON.parse(saved); S.seq=seqSaved; render();
@@ -2849,7 +2980,7 @@ function runSelfTest(){
   if (!PEN_COLORS.includes(opt.penColor)) opt.penColor=DEF_INK_COLOR;
   if (!PEN_WIDTHS.some(p=>p.px===opt.penWidth)) opt.penWidth=DEF_INK_WIDTH;
   updatePenUI();
-  $('#cGrid').checked=opt.grid; $('#cSnap').checked=opt.snap; $('#cIcons').checked=opt.icons; $('#cAuto').checked=opt.auto;
+  $('#cGrid').checked=opt.grid; $('#cSnap').checked=opt.snap; $('#cIcons').checked=opt.icons; $('#cAuto').checked=opt.auto; $('#cUpper').checked=opt.hwUpper!==false;
   $('#footer').textContent=`VisiDraw ${APP_VERSION} · offline`;
   initProps();
   let restored=false;

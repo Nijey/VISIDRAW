@@ -19,12 +19,17 @@ Un solo file, `visidraw.html`: si apre con un doppio clic, funziona **offline** 
    trascrizione arriva già compilata, tu confermi con `Invio` o correggi (svuotando un campo la scritta resta a mano libera).
 
 ### Lettura della scrittura a mano
-Funziona offline, senza librerie, con lo **stampatello** (lettere staccate; il corsivo legato non si può dividere in lettere):
-divide la scritta in righe, lettere e parole, confronta ogni lettera con i modelli (algoritmo $P), usa altezza e posizione
-per maiuscole/minuscole e un vocabolario di parole frequenti negli schemi.
-**Impara dalle tue correzioni**: ogni trascrizione confermata aggiunge le tue lettere e le tue parole (salvate nel browser);
-*Vista › Dimentica la mia scrittura* le azzera.
-4. **Seleziona** (`V`): sposta, ridimensiona, doppio clic per il testo, pannello per forma, colori, frecce e percorso.
+Funziona offline, senza librerie, con lo **stampatello** (il corsivo legato non si può dividere in lettere).
+Con *Vista › Scrivo in stampatello MAIUSCOLO* (attivo di default, anche nella finestra di trascrizione) considera solo
+maiuscole e cifre ed è più preciso.
+- **Divisione in lettere guidata dal riconoscimento**: i tratti, nell'ordine in cui li hai fatti, vengono raggruppati
+  nel modo che dà le lettere più riconoscibili, quindi funziona anche con lettere **molto vicine o che si toccano**.
+- Ogni lettera viene confrontata con i modelli (algoritmo $P, con varianti strette, larghe e oblique); numero di tratti,
+  proporzioni e vuoti interni evitano di scambiare due lettere attaccate per una sola.
+- Un vocabolario di parole frequenti negli schemi (router, switch, firewall, datacenter, internet, VLAN…) corregge le
+  parole, anche ridividendole se una lettera era stata spezzata o unita alla vicina.
+- **Impara dalle tue correzioni**: ogni trascrizione confermata aggiunge le tue lettere e le tue parole (salvate nel browser);
+  *Vista › Dimentica la mia scrittura* le azzera.
 
 ### Punti di aggancio e connettori
 Ogni forma ha **8 punti di aggancio** (croci blu, visibili passando sulla forma o selezionandola): i 4 spigoli e

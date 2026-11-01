@@ -18,9 +18,13 @@ Pagina **HTML unica, locale e offline** (`visidraw.html`): lavagna a mano libera
 4. Forme (`shapePath`, `outline`, `drawIcon`) e connettori (`edgeGeom`, `orthRoute`, `orthCandidates`, `routeScore`).
    Estremo agganciato = `{n}` (automatico, metà dei lati) o `{n, p:[u,v]}` (punto fisso relativo al riquadro,
    proiettato sul contorno da `anchorPoint`; 8 punti in `ANCHORS`). Connettori agganciati: niente diagonali.
-3b. Lettura della scrittura (`hwReadLocal`): `hwSegment` (righe/lettere/parole, raddrizza l'inclinazione), `hwClassify`
-   ($P su `GLYPHS` + lettere imparate, penalità di posizione), vocabolario `HW_WORDS`; `hwLearnFrom` impara dalle correzioni
-   (localStorage `visidraw.hwlearn`). Scrittura sintetica per i test: `SK.hand`.
+3b. Lettura della scrittura (`hwReadLocal`): `hwSegment` (righe; lettere con programmazione dinamica sui tratti in ordine
+   di tempo, costo = `hwClassify` + penalità; `force` = numero di lettere imposto), `hwClassify` ($P su `GLYPHS` + lettere
+   imparate; penalità di posizione, tratti `HW_MAXS`, proporzioni), vocabolario `HW_WORDS` (con ridivisione ±1/±2);
+   `opt.hwUpper` = solo maiuscole; `hwLearnFrom` impara dalle correzioni (localStorage `visidraw.hwlearn`).
+   `detectText`/`insideText` in `recognize()` riconoscono le scritte fatte con la penna normale.
+   Scrittura sintetica per i test: `SK.hand` (`gap`, `messy`). Prima di cambiare pesi o soglie misura con scritte
+   sintetiche vicine e imprecise (oltre all'autotest).
 5. Rendering SVG; 6. interazione; 7. file ed esportazioni (JSON validato da `validState`, SVG, PNG, draw.io); 8. autotest.
 Versione in `APP_VERSION` (aumentala a ogni rilascio).
 
