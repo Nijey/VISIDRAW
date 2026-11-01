@@ -41,6 +41,7 @@ button,select,input,textarea{font:inherit;color:inherit}
 #work{display:grid;grid-template-columns:auto 1fr;min-height:0}
 #palette{width:176px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:8px;user-select:none}
 #palette h4{margin:8px 4px 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+#palHomeBox summary{margin:10px 4px 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer;user-select:none}
 .pal{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
 .pitem{border:1px solid transparent;border-radius:8px;padding:4px 2px 2px;cursor:grab;text-align:center;font-size:10.5px;color:var(--muted);touch-action:none}
 .pitem:hover{background:#f1f5f9;border-color:var(--line)}
@@ -218,6 +219,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
       <div class="pal" id="palShapes"></div>
       <h4>Rete</h4>
       <div class="pal" id="palNet"></div>
+      <details id="palHomeBox"><summary>Casa e intrattenimento</summary><div class="pal" id="palHome"></div></details>
       <p class="hint">Trascina o tocca una forma per inserirla. Oppure disegnala a mano con la <b>penna</b> e premi <b>✨ Elabora</b>.</p>
     </aside>
     <main id="stage">
@@ -319,7 +321,7 @@ kbd{background:#eef2f7;border:1px solid var(--line);border-bottom-width:2px;bord
    3. riconoscimento schizzi   7. file, esportazioni, esempi
    4. forme e connettori       8. autotest
    ===================================================================== */
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 const NS = 'http://www.w3.org/2000/svg';
 const $ = s => document.querySelector(s);
 const GRID = 10;
@@ -1280,20 +1282,26 @@ function hwLearnFrom(rec, text){
 
 /* ---------------- 4. Forme, icone e connettori ---------------- */
 const SHAPES = ['rect','round','ellipse','diamond','parallelogram','triangle','hexagon','document','cylinder','cloud'];
-const ICONS = ['router','switch','catalyst','firewall','server','datacenter','pc','laptop','ap','modem','printer','phone'];
+const NET_ICONS = ['router','switch','catalyst','firewall','server','datacenter','pc','laptop','ap','modem','printer','phone'];
+// icone casa/intrattenimento: nella sezione espandibile della tavolozza
+const HOME_ICONS = ['firetv','console','smartlight','evcharger','echo','soundbar'];
+const ICONS = NET_ICONS.concat(HOME_ICONS);
 const TYPE_NAMES = {rect:'Rettangolo', round:'Rettangolo arrotondato', ellipse:'Ellisse / cerchio', diamond:'Rombo (decisione)',
   parallelogram:'Parallelogramma (I/O)', triangle:'Triangolo', hexagon:'Esagono (preparazione)', document:'Documento',
   cylinder:'Database', cloud:'Nuvola / Internet', router:'Router', switch:'Switch', firewall:'Firewall', server:'Server',
   pc:'PC', laptop:'Portatile', ap:'Access point Wi-Fi', printer:'Stampante', phone:'Telefono IP',
-  catalyst:'Catalyst (switch L3)', datacenter:'Datacenter', modem:'Modem'};
+  catalyst:'Catalyst (switch L3)', datacenter:'Datacenter', modem:'Modem',
+  firetv:'Amazon Fire TV', console:'Console videogiochi', smartlight:'Luce Philips Hue', evcharger:'Colonnina di ricarica EV', echo:'Amazon Echo', soundbar:'Soundbar'};
 const SHORT_NAMES = {rect:'Processo', round:'Attività', ellipse:'Inizio/Fine', diamond:'Decisione', parallelogram:'Dati I/O',
   triangle:'Triangolo', hexagon:'Preparaz.', document:'Documento', cylinder:'Database', cloud:'Nuvola',
   router:'Router', switch:'Switch', firewall:'Firewall', server:'Server', pc:'PC', laptop:'Portatile', ap:'Access point', printer:'Stampante', phone:'Telefono',
-  catalyst:'Catalyst', datacenter:'Datacenter', modem:'Modem'};
+  catalyst:'Catalyst', datacenter:'Datacenter', modem:'Modem',
+  firetv:'Fire TV', console:'Console', smartlight:'Luce Hue', evcharger:'Ricarica EV', echo:'Echo', soundbar:'Soundbar'};
 const DEF_SIZE = {rect:[140,70], round:[140,70], ellipse:[130,64], diamond:[140,90], parallelogram:[150,70], triangle:[110,90],
   hexagon:[140,70], document:[140,80], cylinder:[100,90], cloud:[160,100],
   router:[60,60], switch:[80,44], firewall:[60,56], server:[46,66], pc:[64,58], laptop:[70,50], ap:[60,50], printer:[62,56], phone:[48,56],
-  catalyst:[62,58], datacenter:[78,62], modem:[70,40]};
+  catalyst:[62,58], datacenter:[78,62], modem:[70,40],
+  firetv:[70,52], console:[72,44], smartlight:[44,60], evcharger:[44,66], echo:[44,56], soundbar:[84,30]};
 const isIcon = t => ICONS.includes(t);
 const THEMES = {
   visio:{fill:'#dae8fc', stroke:'#2f5597', text:'#1b1b1b', edge:'#404040', icon:'#1f6fb2'},
@@ -1684,6 +1692,48 @@ function drawIcon(g, n, c){
           el('circle',{cx:r1(rx+rw*0.7), cy:r1(yy+h*0.06), r:r1(Math.min(rw,h)*0.05), fill:'#22c55e'},g); }
       }
       R(x-w*0.02,y+h*0.92,w*1.04,h*0.08,2,c);
+      break; }
+    case 'firetv': {
+      // televisore con chiavetta collegata sotto
+      R(x,y,w,h*0.72,4,c); R(x+w*0.06,y+h*0.08,w*0.88,h*0.56,2,LIGHT);
+      el('path',{d:`M${r1(cx-w*0.1)} ${r1(y+h*0.3)}L${r1(cx+w*0.12)} ${r1(y+h*0.36)}L${r1(cx-w*0.1)} ${r1(y+h*0.42)}Z`, fill:c},g);
+      R(cx-w*0.2,y+h*0.8,w*0.4,h*0.16,3,c);
+      el('line',{x1:r1(cx), y1:r1(y+h*0.72), x2:r1(cx), y2:r1(y+h*0.8), stroke:c, 'stroke-width':2},g);
+      break; }
+    case 'console': {
+      // controller: corpo con impugnature, croce direzionale e pulsanti
+      el('path',{d:`M${r1(x+w*0.18)} ${r1(y+h*0.12)}H${r1(x+w*0.82)}Q${r1(x+w)} ${r1(y+h*0.12)} ${r1(x+w)} ${r1(y+h*0.55)}Q${r1(x+w)} ${r1(y+h)} ${r1(x+w*0.82)} ${r1(y+h)}Q${r1(x+w*0.7)} ${r1(y+h)} ${r1(x+w*0.62)} ${r1(y+h*0.72)}H${r1(x+w*0.38)}Q${r1(x+w*0.3)} ${r1(y+h)} ${r1(x+w*0.18)} ${r1(y+h)}Q${x} ${r1(y+h)} ${x} ${r1(y+h*0.55)}Q${x} ${r1(y+h*0.12)} ${r1(x+w*0.18)} ${r1(y+h*0.12)}Z`, fill:c},g);
+      const s=h*0.1;
+      R(x+w*0.2-s*0.4,y+h*0.45-s*1.3,s*0.8,s*2.6,1,W); R(x+w*0.2-s*1.3,y+h*0.45-s*0.4,s*2.6,s*0.8,1,W);
+      for (const [dx,dy] of [[0,-1],[1,0],[0,1],[-1,0]]) el('circle',{cx:r1(x+w*0.78+dx*s*1.2), cy:r1(y+h*0.45+dy*s*1.2), r:r1(s*0.5), fill:W},g);
+      break; }
+    case 'smartlight': {
+      // lampadina con raggi
+      const r=Math.min(w*0.36, h*0.3), by=y+h*0.38;
+      el('circle',{cx, cy:r1(by), r:r1(r), fill:c},g);
+      R(cx-r*0.55,by+r*0.75,r*1.1,h*0.2,2,c);
+      for (const f of [0.83,0.91]) el('line',{x1:r1(cx-r*0.55), y1:r1(by+r*0.75+h*0.2*f-h*0.05), x2:r1(cx+r*0.55), y2:r1(by+r*0.75+h*0.2*f-h*0.05), stroke:W, 'stroke-width':1.2},g);
+      el('path',{d:`M${r1(cx-r*0.35)} ${r1(by+r*0.2)}Q${cx} ${r1(by-r*0.6)} ${r1(cx+r*0.35)} ${r1(by+r*0.2)}`, fill:'none', stroke:W, 'stroke-width':1.6, 'stroke-linecap':'round'},g);
+      break; }
+    case 'evcharger': {
+      // colonnina con fulmine e cavo
+      R(x+w*0.12,y,w*0.62,h*0.9,5,c); R(x+w*0.2,y+h*0.08,w*0.46,h*0.22,2,LIGHT);
+      el('path',{d:`M${r1(x+w*0.48)} ${r1(y+h*0.38)}L${r1(x+w*0.32)} ${r1(y+h*0.6)}H${r1(x+w*0.44)}L${r1(x+w*0.38)} ${r1(y+h*0.8)}L${r1(x+w*0.56)} ${r1(y+h*0.55)}H${r1(x+w*0.44)}Z`, fill:W},g);
+      el('path',{d:`M${r1(x+w*0.74)} ${r1(y+h*0.4)}Q${r1(x+w)} ${r1(y+h*0.45)} ${r1(x+w*0.9)} ${r1(y+h*0.75)}`, fill:'none', stroke:c, 'stroke-width':r1(Math.max(2,w*0.06)), 'stroke-linecap':'round'},g);
+      R(x,y+h*0.9,w*0.86,h*0.1,2,c);
+      break; }
+    case 'echo': {
+      // altoparlante cilindrico con anello luminoso
+      const ry=Math.min(h*0.1, w*0.2);
+      el('path',{d:`M${x} ${r1(y+ry)}A${w/2} ${ry} 0 0 1 ${x+w} ${r1(y+ry)}V${r1(y+h-ry)}A${w/2} ${ry} 0 0 1 ${x} ${r1(y+h-ry)}Z`, fill:c},g);
+      el('ellipse',{cx, cy:r1(y+ry), rx:r1(w/2-2), ry:r1(ry-1.5), fill:'none', stroke:'#38bdf8', 'stroke-width':2},g);
+      for (let i=0;i<4;i++) el('line',{x1:r1(x+w*0.2), y1:r1(y+h*(0.45+0.12*i)), x2:r1(x+w*0.8), y2:r1(y+h*(0.45+0.12*i)), stroke:W, 'stroke-width':1, 'stroke-opacity':0.7},g);
+      break; }
+    case 'soundbar': {
+      // barra audio con griglia e led
+      R(x,y+h*0.15,w,h*0.7,h*0.3,c);
+      for (let i=0;i<9;i++) el('circle',{cx:r1(x+w*(0.12+0.085*i)), cy:r1(y+h*0.5), r:r1(h*0.07), fill:W, 'fill-opacity':0.75},g);
+      el('circle',{cx:r1(x+w*0.92), cy:r1(y+h*0.5), r:r1(h*0.06), fill:'#22c55e'},g);
       break; }
     case 'modem': {
       // scatola piatta con onda del segnale e led
@@ -2426,7 +2476,7 @@ function miniSvg(type){
   return svg;
 }
 function buildPalette(){
-  for (const [box, list] of [[$('#palShapes'), SHAPES], [$('#palNet'), ICONS]]){
+  for (const [box, list] of [[$('#palShapes'), SHAPES], [$('#palNet'), NET_ICONS], [$('#palHome'), HOME_ICONS]]){
     box.replaceChildren();
     for (const t of list){
       const d=document.createElement('div'); d.className='pitem'; d.title=TYPE_NAMES[t];
@@ -2593,7 +2643,8 @@ function exportDrawio(){
   const cells=['<mxCell id="0"/>','<mxCell id="1" parent="0"/>'];
   for (const n of S.nodes){
     const c=colorsOf(n); let st;
-    if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;`+(n.type==='datacenter'?'fillColor=#fafafa;strokeColor=#005073;':`fillColor=${c.fill};strokeColor=#ffffff;strokeWidth=2;`)+`verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
+    if (HOME_ICONS.includes(n.type)) st=`rounded=1;html=1;fillColor=${c.fill};strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;`;
+    else if (isIcon(n.type)) st=`shape=${DRAWIO_STYLE[n.type]};html=1;pointerEvents=1;dashed=0;`+(n.type==='datacenter'?'fillColor=#fafafa;strokeColor=#005073;':`fillColor=${c.fill};strokeColor=#ffffff;strokeWidth=2;`)+`verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;`;
     else st=DRAWIO_STYLE[n.type]+`fillColor=${c.fill};strokeColor=${c.stroke};`+(n.type==='triangle'&&n.dir==='down'?'direction=south;':'');
     st+=`fontSize=${n.fs||14};fontFamily=${fontName(n)};`+(n.dash?'dashed=1;':'')+(n.sw&&!isIcon(n.type)?`strokeWidth=${n.sw};`:'');
     if (n.type==='triangle' && n.dir==='down') st=st.replace('direction=north;','');
